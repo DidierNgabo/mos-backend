@@ -6,6 +6,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { MikroORM } from '@mikro-orm/core';
 import { RoleSeeder } from './seeders/RoleSeeder';
 import { SuperAdminSeeder } from './seeders/SuperAdminSeeder';
+import { TeamSeeder } from './seeders/TeamSeeder';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
@@ -35,6 +36,7 @@ async function bootstrap() {
     const seeder = orm.seeder;
     await seeder.seed(RoleSeeder);       // must run first — super admin seeder depends on roles
     await seeder.seed(SuperAdminSeeder);
+    await seeder.seed(TeamSeeder);       // backfills teams for existing outreaches
 
      await app.listen(process.env.PORT || 4000);
     console.log(

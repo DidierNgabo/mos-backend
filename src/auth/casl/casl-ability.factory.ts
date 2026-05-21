@@ -108,6 +108,7 @@ export class CaslAbilityFactory {
       can(Action.Manage, 'PCL5Screening', {
         outreach: { id: { $in: outreachIds } },
       } as any);
+      can(Action.Manage, 'Team');
     }
 
     // String subjects don't carry entity shapes, so conditions must be cast.
@@ -118,6 +119,7 @@ export class CaslAbilityFactory {
         'outreaches.id': { $in: outreachIds },
       } as any);
       can(Action.Read, 'Station');
+      can(Action.Read, 'Team');
     }
 
     // PHARMACIST can manage pharmacy stock in their outreaches.

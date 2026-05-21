@@ -37,6 +37,9 @@ export class User {
   @Property({ type: 'string', unique: true })
   email: string;
 
+  @Property({ type: 'string', nullable: true })
+  phone: string | null = null;
+
   @Property({ type: 'string', hidden: true })
   passwordHash: string;
 

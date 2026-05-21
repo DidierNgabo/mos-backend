@@ -52,4 +52,9 @@ export class CreateCommunicableDiseaseDto {
   @IsBoolean()
   @IsOptional()
   contactWithInfected?: boolean;
+
+  @ApiPropertyOptional()
+  @IsBoolean()
+  @IsOptional()
+  hivScreen?: boolean;
 }

@@ -59,6 +59,9 @@ export class CommunicableDisease {
   @Property({ type: 'boolean', default: false })
   contactWithInfected: boolean = false;
 
+  @Property({ type: 'boolean', default: false })
+  hivScreen: boolean = false;
+
   @Property()
   createdAt: Date = new Date();
 

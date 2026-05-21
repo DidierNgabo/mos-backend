@@ -35,6 +35,11 @@ export class CreateUserDto {
   @IsUUID('4', { each: true })
   roleIds: string[];
 
+  @ApiPropertyOptional({ description: 'Phone number of the user' })
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
   @ApiPropertyOptional({ description: 'Station the user is assigned to' })
   @IsOptional()
   @IsUUID()

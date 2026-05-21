@@ -18,6 +18,9 @@ import { GAD7ScreeningsModule } from './gad7-screenings/gad7-screenings.module';
 import { PCL5ScreeningsModule } from './pcl5-screenings/pcl5-screenings.module';
 import { PHQ9ScreeningsModule } from './phq9-screenings/phq9-screenings.module';
 import { PrescriptionsModule } from './prescriptions/prescriptions.module';
+import { ReportsModule } from './reports/reports.module';
+import { StatsModule } from './stats/stats.module';
+import { TeamsModule } from './teams/teams.module';
 import { TransfersModule } from './transfers/transfers.module';
 import { UsersModule } from './users/users.module';
 import { VitalSignsModule } from './vital-signs/vital-signs.module';
@@ -43,6 +46,9 @@ import { VitalSignsModule } from './vital-signs/vital-signs.module';
     PHQ9ScreeningsModule,
     GAD7ScreeningsModule,
     PCL5ScreeningsModule,
+    TeamsModule,
+    StatsModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

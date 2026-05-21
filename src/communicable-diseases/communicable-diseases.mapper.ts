@@ -27,6 +27,7 @@ export class CommunicableDiseasesMapper
     if (dto.feverDurationDays !== undefined) cd.feverDurationDays = dto.feverDurationDays;
     if (dto.recentTravel !== undefined) cd.recentTravel = dto.recentTravel;
     if (dto.contactWithInfected !== undefined) cd.contactWithInfected = dto.contactWithInfected;
+    if (dto.hivScreen !== undefined) cd.hivScreen = dto.hivScreen;
     (cd as any).queueEntry = { id: dto.queueEntryId };
     (cd as any).patient = { id: dto.patientId };
     (cd as any).outreach = { id: dto.outreachId };
@@ -48,6 +49,7 @@ export class CommunicableDiseasesMapper
     if (dto.feverDurationDays !== undefined) patch.feverDurationDays = dto.feverDurationDays;
     if (dto.recentTravel !== undefined) patch.recentTravel = dto.recentTravel;
     if (dto.contactWithInfected !== undefined) patch.contactWithInfected = dto.contactWithInfected;
+    if (dto.hivScreen !== undefined) patch.hivScreen = dto.hivScreen;
     return patch;
   }
 

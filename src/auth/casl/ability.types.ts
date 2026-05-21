@@ -31,6 +31,7 @@ export type AppSubject =
   | 'PHQ9Screening'
   | 'GAD7Screening'
   | 'PCL5Screening'
+  | 'Team'
   | 'all';
 
 export type AppAbility = MongoAbility<[Action, AppSubject]>;

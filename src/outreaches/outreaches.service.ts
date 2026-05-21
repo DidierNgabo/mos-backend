@@ -7,6 +7,10 @@ import {
   DEFAULT_STATIONS,
   Station,
 } from 'src/stations/entities/station.entity';
+import {
+  DEFAULT_TEAM_HIERARCHY,
+  Team,
+} from 'src/teams/entities/team.entity';
 import { User } from 'src/users/entities/user.entity';
 import { CreateOutreachDto } from './dto/create-outreach.dto';
 import { OutreachQueryDto } from './dto/query-outreach.dto';
@@ -67,6 +71,26 @@ export class OutreachesService extends MikroOrmEntityService<
         isActive: true,
       });
     });
+
+    for (const group of DEFAULT_TEAM_HIERARCHY) {
+      const parentTeam = this.entityManager.create(Team, {
+        id: randomUUID(),
+        outreach,
+        name: group.name,
+        type: group.type,
+        isActive: true,
+      });
+      for (const childName of group.children) {
+        this.entityManager.create(Team, {
+          id: randomUUID(),
+          outreach,
+          name: childName,
+          parent: parentTeam,
+          isActive: true,
+        });
+      }
+    }
+
     await this.entityManager.flush();
 
     return this.find(outreach.id) as Promise<Outreach>;
