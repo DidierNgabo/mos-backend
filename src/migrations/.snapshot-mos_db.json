@@ -337,6 +337,334 @@
           "enumItems": [],
           "mappedType": "uuid"
         },
+        "outreach_id": {
+          "name": "outreach_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "patient_id": {
+          "name": "patient_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "healing_request": {
+          "name": "healing_request",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "sins_to_confess": {
+          "name": "sins_to_confess",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "is_saved": {
+          "name": "is_saved",
+          "type": "bool",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "false",
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "boolean"
+        },
+        "accepted_jesus": {
+          "name": "accepted_jesus",
+          "type": "bool",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "false",
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "boolean"
+        },
+        "continue_the_journey": {
+          "name": "continue_the_journey",
+          "type": "bool",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "false",
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "boolean"
+        },
+        "follow_up": {
+          "name": "follow_up",
+          "type": "bool",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "false",
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "boolean"
+        },
+        "not_sure": {
+          "name": "not_sure",
+          "type": "bool",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "false",
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "boolean"
+        },
+        "declined": {
+          "name": "declined",
+          "type": "bool",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "false",
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "boolean"
+        },
+        "prayer_request": {
+          "name": "prayer_request",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "done_by_id": {
+          "name": "done_by_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz(6)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 6,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz(6)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 6,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        }
+      },
+      "name": "evangelism_records",
+      "schema": "public",
+      "indexes": [
+        {
+          "columnNames": [
+            "outreach_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "evangelism_records_outreach_id_index",
+          "unique": false,
+          "primary": false
+        },
+        {
+          "columnNames": [
+            "id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "evangelism_records_pkey",
+          "unique": true,
+          "primary": true
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {
+        "evangelism_records_done_by_id_foreign": {
+          "columnNames": [
+            "done_by_id"
+          ],
+          "constraintName": "evangelism_records_done_by_id_foreign",
+          "localTableName": "public.evangelism_records",
+          "referencedTableName": "public.users",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "updateRule": "cascade",
+          "deleteRule": "no action"
+        },
+        "evangelism_records_outreach_id_foreign": {
+          "columnNames": [
+            "outreach_id"
+          ],
+          "constraintName": "evangelism_records_outreach_id_foreign",
+          "localTableName": "public.evangelism_records",
+          "referencedTableName": "public.outreaches",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "updateRule": "cascade",
+          "deleteRule": "no action"
+        },
+        "evangelism_records_patient_id_foreign": {
+          "columnNames": [
+            "patient_id"
+          ],
+          "constraintName": "evangelism_records_patient_id_foreign",
+          "localTableName": "public.evangelism_records",
+          "referencedTableName": "public.patients",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "updateRule": "cascade",
+          "deleteRule": "set null"
+        }
+      },
+      "nativeEnums": {},
+      "comment": null
+    },
+    {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": true,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
         "queue_entry_id": {
           "name": "queue_entry_id",
           "type": "uuid",
@@ -1832,6 +2160,16 @@
       "name": "patients",
       "schema": "public",
       "indexes": [
+        {
+          "columnNames": [
+            "outreach_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "patients_outreach_id_index",
+          "unique": false,
+          "primary": false
+        },
         {
           "columnNames": [
             "id"
@@ -3585,6 +3923,16 @@
       "indexes": [
         {
           "columnNames": [
+            "outreach_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "prescriptions_outreach_id_index",
+          "unique": false,
+          "primary": false
+        },
+        {
+          "columnNames": [
             "id"
           ],
           "composite": false,
@@ -3592,6 +3940,16 @@
           "keyName": "prescriptions_pkey",
           "unique": true,
           "primary": true
+        },
+        {
+          "columnNames": [
+            "queue_entry_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "prescriptions_queue_entry_id_index",
+          "unique": false,
+          "primary": false
         }
       ],
       "checks": [],
@@ -3853,6 +4211,17 @@
       "name": "queue_entries",
       "schema": "public",
       "indexes": [
+        {
+          "columnNames": [
+            "outreach_id",
+            "patient_id"
+          ],
+          "composite": true,
+          "constraint": false,
+          "keyName": "queue_entries_outreach_id_patient_id_index",
+          "unique": false,
+          "primary": false
+        },
         {
           "columnNames": [
             "id"
@@ -4186,6 +4555,16 @@
           "keyName": "station_visits_pkey",
           "unique": true,
           "primary": true
+        },
+        {
+          "columnNames": [
+            "queue_entry_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "station_visits_queue_entry_id_index",
+          "unique": false,
+          "primary": false
         }
       ],
       "checks": [],
@@ -4358,6 +4737,16 @@
       "name": "stations",
       "schema": "public",
       "indexes": [
+        {
+          "columnNames": [
+            "outreach_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "stations_outreach_id_index",
+          "unique": false,
+          "primary": false
+        },
         {
           "columnNames": [
             "id"
@@ -4699,7 +5088,8 @@
             "CLINICAL",
             "ALLIED_HEALTH",
             "SUPPORTING_STAFF",
-            "STUDENTS"
+            "STUDENTS",
+            "EVANGELISM"
           ],
           "mappedType": "enum"
         },

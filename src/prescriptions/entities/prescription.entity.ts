@@ -41,13 +41,13 @@ export class Prescription {
   @Property({ type: 'uuid', primary: true })
   id: string = randomUUID();
 
-  @ManyToOne(() => QueueEntry)
+  @ManyToOne(() => QueueEntry, { index: true })
   queueEntry: QueueEntry;
 
   @ManyToOne(() => Patient)
   patient: Patient;
 
-  @ManyToOne(() => Outreach)
+  @ManyToOne(() => Outreach, { index: true })
   outreach: Outreach;
 
   @ManyToOne(() => PharmacyStock)

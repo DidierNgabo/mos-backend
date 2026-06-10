@@ -12,6 +12,14 @@ const config: Options = {
   driver: PostgreSqlDriver,
   host: DBHOST,
   port: parseInt(DBPORT as string),
+  driverOptions: {
+    connection: {
+      pool: {
+        min: 2,
+        max: 30,
+      },
+    },
+  },
   migrations: {
     path: './dist/migrations',
     pathTs: './src/migrations',

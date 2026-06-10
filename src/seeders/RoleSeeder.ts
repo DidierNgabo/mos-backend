@@ -12,6 +12,7 @@ export class RoleSeeder extends Seeder {
       'DOCTOR',
       'DATA_CLERK',
       'PHARMACIST',
+      'EVANGELIST',
     ];
 
     for (const roleName of defaultRoles) {

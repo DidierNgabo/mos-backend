@@ -17,6 +17,7 @@ export enum RoleName {
   DOCTOR = 'DOCTOR',
   DATA_CLERK = 'DATA_CLERK',
   PHARMACIST = 'PHARMACIST',
+  EVANGELIST = 'EVANGELIST',
 }
 
 const CLINICAL_ROLES: string[] = [
@@ -109,6 +110,9 @@ export class CaslAbilityFactory {
         outreach: { id: { $in: outreachIds } },
       } as any);
       can(Action.Manage, 'Team');
+      can(Action.Manage, 'EvangelismRecord', {
+        outreach: { id: { $in: outreachIds } },
+      } as any);
     }
 
     // String subjects don't carry entity shapes, so conditions must be cast.
@@ -212,6 +216,17 @@ export class CaslAbilityFactory {
     // NURSE can read prescriptions to stay informed of patient treatment.
     if (authUser.roles.includes(RoleName.NURSE)) {
       can(Action.Read, 'Prescription', {
+        outreach: { id: { $in: outreachIds } },
+      } as any);
+    }
+
+    // EVANGELIST can record and review evangelism conversations within their outreaches.
+    if (authUser.roles.includes(RoleName.EVANGELIST)) {
+      can(Action.Read, 'Outreach', { id: { $in: outreachIds } } as any);
+      can(Action.Read, 'Patient', {
+        outreach: { id: { $in: outreachIds } },
+      } as any);
+      can([Action.Create, Action.Read, Action.Update], 'EvangelismRecord', {
         outreach: { id: { $in: outreachIds } },
       } as any);
     }

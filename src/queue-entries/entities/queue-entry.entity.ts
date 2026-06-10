@@ -1,4 +1,4 @@
-import { Entity, Enum, ManyToOne, Property } from '@mikro-orm/core';
+import { Entity, Enum, Index, ManyToOne, Property } from '@mikro-orm/core';
 import { Outreach } from '../../outreaches/entities/outreach.entity';
 import { Patient } from '../../patients/entities/patient.entity';
 import { Station } from '../../stations/entities/station.entity';
@@ -33,6 +33,7 @@ export const DEFAULT_PROJECTION: QueueEntryProjection[] = [
 ];
 
 @Entity({ tableName: 'queue_entries' })
+@Index({ properties: ['outreach', 'patient'] })
 export class QueueEntry {
   @Property({ type: 'uuid', primary: true })
   id: string;

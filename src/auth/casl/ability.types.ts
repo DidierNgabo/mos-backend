@@ -32,6 +32,7 @@ export type AppSubject =
   | 'GAD7Screening'
   | 'PCL5Screening'
   | 'Team'
+  | 'EvangelismRecord'
   | 'all';
 
 export type AppAbility = MongoAbility<[Action, AppSubject]>;

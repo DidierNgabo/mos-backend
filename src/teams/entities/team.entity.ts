@@ -15,6 +15,7 @@ export enum TeamType {
   ALLIED_HEALTH = 'ALLIED_HEALTH',
   SUPPORTING_STAFF = 'SUPPORTING_STAFF',
   STUDENTS = 'STUDENTS',
+  EVANGELISM = 'EVANGELISM',
 }
 
 export const DEFAULT_TEAM_HIERARCHY: {
@@ -61,6 +62,11 @@ export const DEFAULT_TEAM_HIERARCHY: {
       'Healthcare Students (CMHS)',
       'Non-Healthcare Students (non-CMHS)',
     ],
+  },
+  {
+    name: 'Evangelism Team',
+    type: TeamType.EVANGELISM,
+    children: ['Evangelists'],
   },
 ];
 

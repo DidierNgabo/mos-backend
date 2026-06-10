@@ -52,7 +52,7 @@ export class Station {
   @Property({ type: 'uuid', primary: true })
   id: string;
 
-  @ManyToOne(() => Outreach)
+  @ManyToOne(() => Outreach, { index: true })
   outreach: Outreach;
 
   @Property({ type: 'string' })

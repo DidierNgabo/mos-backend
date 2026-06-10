@@ -8,7 +8,7 @@ export class StationVisit {
   @Property({ type: 'uuid', primary: true })
   id: string;
 
-  @ManyToOne(() => QueueEntry)
+  @ManyToOne(() => QueueEntry, { index: true })
   queueEntry: QueueEntry;
 
   @ManyToOne(() => Station)

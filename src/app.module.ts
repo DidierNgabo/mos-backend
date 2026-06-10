@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { CommunicableDiseasesModule } from './communicable-diseases/communicable-diseases.module';
 import { EmailModule } from './email/email.module';
+import { EvangelismModule } from './evangelism/evangelism.module';
 import { LabResultsModule } from './lab-results/lab-results.module';
 import config from './mikro-orm.config';
 import { ObservationsModule } from './observations/observations.module';
@@ -49,6 +50,7 @@ import { VitalSignsModule } from './vital-signs/vital-signs.module';
     TeamsModule,
     StatsModule,
     ReportsModule,
+    EvangelismModule,
   ],
   controllers: [AppController],
   providers: [AppService],

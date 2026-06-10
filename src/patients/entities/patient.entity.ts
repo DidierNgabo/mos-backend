@@ -34,7 +34,7 @@ export class Patient {
   @Property({ type: 'string', unique: true })
   registrationNumber: string;
 
-  @ManyToOne(() => Outreach)
+  @ManyToOne(() => Outreach, { index: true })
   outreach: Outreach;
 
   @Property({ type: 'string' })

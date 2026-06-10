@@ -1,7 +1,9 @@
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityManager, EntityRepository } from '@mikro-orm/postgresql';
+import { LockMode } from '@mikro-orm/core';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { MikroOrmEntityService } from 'src/common/mikro-orm.entity-service';
+import { PharmacyStock } from 'src/pharmacy-stock/entities/pharmacy-stock.entity';
 import { PharmacyStockService } from 'src/pharmacy-stock/pharmacy-stock.service';
 import { TransactionType } from 'src/pharmacy-stock/entities/stock-transaction.entity';
 import { User } from 'src/users/entities/user.entity';
@@ -59,29 +61,44 @@ export class PrescriptionsService extends MikroOrmEntityService<
 
     const stock = prescription.pharmacyStock as any;
     const stockId = stock.id ?? stock;
-    const stockRecord = await this.pharmacyStockService['repository'].findOne({ id: stockId });
-    if (!stockRecord) throw new NotFoundException('Pharmacy stock item not found');
-    if (stockRecord.quantityInStock < prescription.quantity) {
-      throw new BadRequestException(
-        `Insufficient stock. Available: ${stockRecord.quantityInStock}, Required: ${prescription.quantity}`,
+
+    await this.entityManager.begin();
+    try {
+      // Lock the stock row for the duration of this transaction so concurrent
+      // dispenses cannot both pass the quantity check before either decrements.
+      const stockRecord = await this.entityManager.findOne(
+        PharmacyStock,
+        { id: stockId },
+        { lockMode: LockMode.PESSIMISTIC_WRITE, refresh: true },
       );
+      if (!stockRecord) throw new NotFoundException('Pharmacy stock item not found');
+      if (stockRecord.quantityInStock < prescription.quantity) {
+        throw new BadRequestException(
+          `Insufficient stock. Available: ${stockRecord.quantityInStock}, Required: ${prescription.quantity}`,
+        );
+      }
+
+      await this.pharmacyStockService.recordTransaction(
+        stockId,
+        {
+          transactionType: TransactionType.DISPENSE,
+          quantity: prescription.quantity,
+          notes: `Dispensed for prescription ${id}`,
+        },
+        dispensedById,
+      );
+
+      prescription.status = PrescriptionStatus.DISPENSED;
+      prescription.dispensedAt = new Date();
+      (prescription as any).dispensedBy = { id: dispensedById };
+
+      await this.entityManager.flush();
+      await this.entityManager.commit();
+    } catch (err) {
+      await this.entityManager.rollback();
+      throw err;
     }
 
-    await this.pharmacyStockService.recordTransaction(
-      stockId,
-      {
-        transactionType: TransactionType.DISPENSE,
-        quantity: prescription.quantity,
-        notes: `Dispensed for prescription ${id}`,
-      },
-      dispensedById,
-    );
-
-    prescription.status = PrescriptionStatus.DISPENSED;
-    prescription.dispensedAt = new Date();
-    (prescription as any).dispensedBy = { id: dispensedById };
-
-    await this.entityManager.flush();
     return this.find(id) as Promise<Prescription>;
   }
 
