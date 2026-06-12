@@ -5,11 +5,12 @@ import { Observation } from './entities/observation.entity';
 import { ObservationsController } from './observations.controller';
 import { ObservationsMapper } from './observations.mapper';
 import { ObservationsService } from './observations.service';
+import { DiagnosisCatalogService } from './diagnosis-catalog.service';
 
 @Module({
   imports: [MikroOrmModule.forFeature([Observation, User])],
   controllers: [ObservationsController],
-  providers: [ObservationsService, ObservationsMapper],
+  providers: [ObservationsService, ObservationsMapper, DiagnosisCatalogService],
   exports: [ObservationsService],
 })
 export class ObservationsModule {}

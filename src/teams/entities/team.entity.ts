@@ -8,6 +8,7 @@ import {
   Property,
 } from '@mikro-orm/core';
 import { Outreach } from '../../outreaches/entities/outreach.entity';
+import { Station } from '../../stations/entities/station.entity';
 import { User } from '../../users/entities/user.entity';
 
 export enum TeamType {
@@ -76,6 +77,7 @@ export enum TeamProjection {
   CHILDREN = 'children',
   LEADER = 'leader',
   MEMBERS = 'members',
+  STATION = 'station',
 }
 
 export const SUMMARY_PROJECTION: TeamProjection[] = [TeamProjection.LEADER];
@@ -86,6 +88,7 @@ export const DEFAULT_PROJECTION: TeamProjection[] = [
   TeamProjection.CHILDREN,
   TeamProjection.LEADER,
   TeamProjection.MEMBERS,
+  TeamProjection.STATION,
 ];
 
 @Entity({ tableName: 'teams' })
@@ -116,6 +119,9 @@ export class Team {
 
   @ManyToMany(() => User, undefined, { owner: true })
   members = new Collection<User>(this);
+
+  @ManyToOne(() => Station, { nullable: true })
+  station: Station | null = null;
 
   @Property({ type: 'boolean', default: true })
   isActive: boolean = true;

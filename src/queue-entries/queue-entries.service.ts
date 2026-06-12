@@ -10,6 +10,7 @@ import { LabResult } from 'src/lab-results/entities/lab-result.entity';
 import { Observation } from 'src/observations/entities/observation.entity';
 import { Prescription } from 'src/prescriptions/entities/prescription.entity';
 import { Station } from 'src/stations/entities/station.entity';
+import { Team } from 'src/teams/entities/team.entity';
 import { Transfer } from 'src/transfers/entities/transfer.entity';
 import { User } from 'src/users/entities/user.entity';
 import { VitalSign } from 'src/vital-signs/entities/vital-sign.entity';
@@ -18,7 +19,12 @@ import { MoveQueueEntryDto } from './dto/move-queue-entry.dto';
 import { QueueEntryQueryDto } from './dto/query-queue-entry.dto';
 import { UpdateQueueEntryDto } from './dto/update-queue-entry.dto';
 import { UpdateQueueStatusDto } from './dto/update-queue-status.dto';
-import { QueueEntry, QueueStatus, QueueEntryProjection, DEFAULT_PROJECTION } from './entities/queue-entry.entity';
+import {
+  QueueEntry,
+  QueueStatus,
+  QueueEntryProjection,
+  DEFAULT_PROJECTION,
+} from './entities/queue-entry.entity';
 import { StationVisit } from './entities/station-visit.entity';
 import { QueueEntriesMapper } from './queue-entries.mapper';
 
@@ -51,6 +57,8 @@ export class QueueEntriesService extends MikroOrmEntityService<
     private readonly userRepository: EntityRepository<User>,
     @InjectRepository(Prescription)
     private readonly prescriptionRepository: EntityRepository<Prescription>,
+    @InjectRepository(Team)
+    private readonly teamRepository: EntityRepository<Team>,
   ) {
     super(mapper, repository, entityManager, DEFAULT_PROJECTION);
   }
@@ -64,7 +72,14 @@ export class QueueEntriesService extends MikroOrmEntityService<
 
     const patientId = (entry.patient as any).id;
 
-    const [vitalSigns, observations, labResults, communicableDiseases, transfers, prescriptions] = await Promise.all([
+    const [
+      vitalSigns,
+      observations,
+      labResults,
+      communicableDiseases,
+      transfers,
+      prescriptions,
+    ] = await Promise.all([
       this.vitalSignRepository.find(
         { patient: { id: patientId } },
         { orderBy: { createdAt: 'DESC' }, limit: 20 },
@@ -87,16 +102,29 @@ export class QueueEntriesService extends MikroOrmEntityService<
       ),
       this.prescriptionRepository.find(
         { queueEntry: { id: entryId } },
-        { populate: ['pharmacyStock', 'prescribedBy', 'dispensedBy'], orderBy: { createdAt: 'DESC' } },
+        {
+          populate: ['pharmacyStock', 'prescribedBy', 'dispensedBy'],
+          orderBy: { createdAt: 'DESC' },
+        },
       ),
     ]);
 
-    return { entry, vitalSigns, observations, labResults, communicableDiseases, transfers, prescriptions };
+    return {
+      entry,
+      vitalSigns,
+      observations,
+      labResults,
+      communicableDiseases,
+      transfers,
+      prescriptions,
+    };
   }
 
   async findMyQueue(user: AuthenticatedUser, query: QueueEntryQueryDto) {
     const isClinical = user.roles.some((r) =>
-      [RoleName.NURSE, RoleName.DOCTOR].includes(r as RoleName),
+      [RoleName.NURSE, RoleName.DOCTOR, RoleName.PSYCHOLOGIST].includes(
+        r as RoleName,
+      ),
     );
 
     if (isClinical) {
@@ -106,16 +134,79 @@ export class QueueEntriesService extends MikroOrmEntityService<
       );
       if (dbUser?.station) {
         query.currentStationId = (dbUser.station as any).id;
+        const result = await this.findAll(query);
+        return {
+          ...result,
+          queueScope: {
+            source: 'INDIVIDUAL',
+            stations: [
+              {
+                id: dbUser.station.id,
+                name: dbUser.station.name,
+              },
+            ],
+          },
+        };
       } else {
-        return { items: [], paginationInfo: { totalNumItems: 0, limit: query.limit ?? 50, offset: query.offset ?? 0 } };
+        const teams = await this.teamRepository.find(
+          {
+            isActive: true,
+            station: { $ne: null },
+            $or: [{ leader: { id: user.id } }, { members: { id: user.id } }],
+          },
+          { populate: ['station'] },
+        );
+        const stationIds = [
+          ...new Set(
+            teams
+              .map((team) => team.station?.id)
+              .filter((id): id is string => Boolean(id)),
+          ),
+        ];
+        if (stationIds.length === 0) {
+          return {
+            items: [],
+            paginationInfo: {
+              totalNumItems: 0,
+              limit: query.limit ?? 50,
+              offset: query.offset ?? 0,
+            },
+            queueScope: { source: 'NONE', stations: [] },
+          };
+        }
+        query.currentStationIds = stationIds;
+        const result = await this.findAll(query);
+        return {
+          ...result,
+          queueScope: {
+            source: 'TEAM',
+            stations: teams
+              .map((team) => team.station)
+              .filter((station): station is Station => Boolean(station))
+              .map((station) => ({ id: station.id, name: station.name }))
+              .filter(
+                (station, index, stations) =>
+                  stations.findIndex((item) => item.id === station.id) ===
+                  index,
+              ),
+          },
+        };
       }
     }
 
-    return this.findAll(query);
+    const result = await this.findAll(query);
+    return { ...result, queueScope: { source: 'ALL', stations: [] } };
   }
 
-  async moveToStation(id: string, dto: MoveQueueEntryDto, user: AuthenticatedUser): Promise<QueueEntry> {
-    const entry = await this.repository.findOne({ id }, { populate: ['currentStation'] });
+  async moveToStation(
+    id: string,
+    dto: MoveQueueEntryDto,
+    user: AuthenticatedUser,
+  ): Promise<QueueEntry> {
+    const entry = await this.repository.findOne(
+      { id },
+      { populate: ['currentStation'] },
+    );
     if (!entry) throw new NotFoundException('Queue entry not found');
 
     const now = new Date();
@@ -144,8 +235,14 @@ export class QueueEntriesService extends MikroOrmEntityService<
     this.entityManager.persist(visit);
 
     // Update the queue entry — use getReference so MikroORM has a proper entity proxy
-    entry.currentStation = this.entityManager.getReference(Station, dto.stationId);
-    if (entry.status === QueueStatus.WAITING || entry.status === QueueStatus.IN_SERVICE) {
+    entry.currentStation = this.entityManager.getReference(
+      Station,
+      dto.stationId,
+    );
+    if (
+      entry.status === QueueStatus.WAITING ||
+      entry.status === QueueStatus.IN_SERVICE
+    ) {
       entry.status = QueueStatus.WAITING;
     }
     this.entityManager.persist(entry);
@@ -154,12 +251,18 @@ export class QueueEntriesService extends MikroOrmEntityService<
     return this.find(id);
   }
 
-  async updateStatus(id: string, dto: UpdateQueueStatusDto): Promise<QueueEntry> {
+  async updateStatus(
+    id: string,
+    dto: UpdateQueueStatusDto,
+  ): Promise<QueueEntry> {
     const entry = await this.repository.findOne({ id });
     if (!entry) throw new NotFoundException('Queue entry not found');
 
     entry.status = dto.status;
-    if (dto.status === QueueStatus.COMPLETED || dto.status === QueueStatus.NO_SHOW) {
+    if (
+      dto.status === QueueStatus.COMPLETED ||
+      dto.status === QueueStatus.NO_SHOW
+    ) {
       entry.completedAt = new Date();
       (entry as any).currentStation = null;
     }

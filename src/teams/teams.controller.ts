@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { AuthenticatedUser } from 'src/auth/auth.types';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
@@ -15,27 +24,44 @@ export class TeamsController {
   constructor(private readonly teamsService: TeamsService) {}
 
   @Post()
-  @CheckPolicies((ability) => ability.rulesFor(Action.Create, 'Team').some((r) => !r.inverted))
+  @CheckPolicies((ability) =>
+    ability.rulesFor(Action.Create, 'Team').some((r) => !r.inverted),
+  )
   create(@Body() dto: CreateTeamDto) {
     return this.teamsService.createTeam(dto);
   }
 
   @Get()
-  @CheckPolicies((ability) => ability.rulesFor(Action.Read, 'Team').some((r) => !r.inverted))
-  findAll(@Query() query: TeamQueryDto, @CurrentUser() user: AuthenticatedUser) {
-    const isAdmin = user.roles.some((r) => ['SUPER_ADMIN', 'OUTREACH_ADMIN'].includes(r));
-    if (!isAdmin) query.memberId = user.id;
+  @CheckPolicies((ability) =>
+    ability.rulesFor(Action.Read, 'Team').some((r) => !r.inverted),
+  )
+  findAll(
+    @Query() query: TeamQueryDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    const isAdmin = user.roles.some((r) =>
+      ['SUPER_ADMIN', 'OUTREACH_ADMIN'].includes(r),
+    );
+    if (!isAdmin) return this.teamsService.findVisibleTeams(query, user.id);
     return this.teamsService.findAll(query);
   }
 
   @Get(':id')
-  @CheckPolicies((ability) => ability.rulesFor(Action.Read, 'Team').some((r) => !r.inverted))
-  findOne(@Param('id') id: string) {
+  @CheckPolicies((ability) =>
+    ability.rulesFor(Action.Read, 'Team').some((r) => !r.inverted),
+  )
+  findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    const isAdmin = user.roles.some((r) =>
+      ['SUPER_ADMIN', 'OUTREACH_ADMIN'].includes(r),
+    );
+    if (!isAdmin) return this.teamsService.findVisibleTeam(id, user.id);
     return this.teamsService.find(id);
   }
 
   @Patch(':id')
-  @CheckPolicies((ability) => ability.rulesFor(Action.Update, 'Team').some((r) => !r.inverted))
+  @CheckPolicies((ability) =>
+    ability.rulesFor(Action.Update, 'Team').some((r) => !r.inverted),
+  )
   update(@Param('id') id: string, @Body() dto: UpdateTeamDto) {
     return this.teamsService.updateTeam(id, dto);
   }

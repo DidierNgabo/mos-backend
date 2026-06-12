@@ -48,5 +48,10 @@ export class CreateTeamDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @IsUUID()
+  stationId?: string | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   isActive?: boolean = true;
 }

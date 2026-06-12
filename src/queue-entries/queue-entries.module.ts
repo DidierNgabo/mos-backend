@@ -6,6 +6,7 @@ import { Observation } from 'src/observations/entities/observation.entity';
 import { Prescription } from 'src/prescriptions/entities/prescription.entity';
 import { PrescriptionsModule } from 'src/prescriptions/prescriptions.module';
 import { Transfer } from 'src/transfers/entities/transfer.entity';
+import { Team } from 'src/teams/entities/team.entity';
 import { User } from 'src/users/entities/user.entity';
 import { VitalSign } from 'src/vital-signs/entities/vital-sign.entity';
 import { QueueEntry } from './entities/queue-entry.entity';
@@ -16,7 +17,18 @@ import { QueueEntriesService } from './queue-entries.service';
 
 @Module({
   imports: [
-    MikroOrmModule.forFeature([QueueEntry, StationVisit, VitalSign, Observation, LabResult, CommunicableDisease, Transfer, User, Prescription]),
+    MikroOrmModule.forFeature([
+      QueueEntry,
+      StationVisit,
+      VitalSign,
+      Observation,
+      LabResult,
+      CommunicableDisease,
+      Transfer,
+      User,
+      Prescription,
+      Team,
+    ]),
     PrescriptionsModule,
   ],
   controllers: [QueueEntriesController],

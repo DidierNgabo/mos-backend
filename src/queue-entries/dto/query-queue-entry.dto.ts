@@ -1,8 +1,16 @@
-import { IsDateString, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 import { QueuePriority, QueueStatus } from '../entities/queue-entry.entity';
 import { PaginationQueryDto } from 'src/utils/pagination.utils';
 
 export class QueueEntryQueryDto extends PaginationQueryDto {
+  currentStationIds?: string[];
+
   @IsOptional()
   @IsUUID()
   patientId?: string;

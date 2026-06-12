@@ -8,7 +8,12 @@ import { UpdateTeamDto } from './dto/update-team.dto';
 import { Team } from './entities/team.entity';
 
 @Injectable()
-export class TeamsMapper implements EntityMapper<Team, CreateTeamDto, UpdateTeamDto, TeamQueryDto> {
+export class TeamsMapper implements EntityMapper<
+  Team,
+  CreateTeamDto,
+  UpdateTeamDto,
+  TeamQueryDto
+> {
   constructor(
     @InjectRepository(Team)
     private readonly repository: EntityRepository<Team>,
@@ -27,6 +32,9 @@ export class TeamsMapper implements EntityMapper<Team, CreateTeamDto, UpdateTeam
     if (dto.parentId) {
       (team as any).parent = { id: dto.parentId };
     }
+    if (dto.stationId) {
+      (team as any).station = { id: dto.stationId };
+    }
     return team;
   }
 
@@ -43,6 +51,9 @@ export class TeamsMapper implements EntityMapper<Team, CreateTeamDto, UpdateTeam
     if (dto.type !== undefined) data.type = dto.type;
     if (dto.isActive !== undefined) data.isActive = dto.isActive;
     if (dto.parentId !== undefined) data.parent = { id: dto.parentId };
+    if (dto.stationId !== undefined) {
+      data.station = dto.stationId ? { id: dto.stationId } : null;
+    }
     return data;
   }
 
@@ -59,11 +70,14 @@ export class TeamsMapper implements EntityMapper<Team, CreateTeamDto, UpdateTeam
     const leaderFilter: FilterQuery<Team> = query.leaderId && {
       leader: { id: query.leaderId },
     };
-    const memberFilter: FilterQuery<Team> = query.memberId && ({
-      members: { id: query.memberId },
-    } as any);
-    const isActiveFilter: FilterQuery<Team> =
-      query.isActive !== undefined && { isActive: query.isActive };
+    const memberFilter: FilterQuery<Team> =
+      query.memberId &&
+      ({
+        members: { id: query.memberId },
+      } as any);
+    const isActiveFilter: FilterQuery<Team> = query.isActive !== undefined && {
+      isActive: query.isActive,
+    };
     const searchFilter: FilterQuery<Team> = query.search && {
       name: { $ilike: '%' + query.search + '%' },
     };

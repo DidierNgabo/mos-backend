@@ -9,9 +9,12 @@ import { UpdateObservationDto } from './dto/update-observation.dto';
 import { Observation } from './entities/observation.entity';
 
 @Injectable()
-export class ObservationsMapper
-  implements EntityMapper<Observation, CreateObservationDto, UpdateObservationDto, ObservationQueryDto>
-{
+export class ObservationsMapper implements EntityMapper<
+  Observation,
+  CreateObservationDto,
+  UpdateObservationDto,
+  ObservationQueryDto
+> {
   constructor(
     @InjectRepository(Observation)
     private readonly repository: EntityRepository<Observation>,
@@ -22,8 +25,10 @@ export class ObservationsMapper
     obs.id = randomUUID();
     obs.chiefComplaint = dto.chiefComplaint;
     obs.diagnosis = dto.diagnosis;
+    if (dto.diagnosisCode !== undefined) obs.diagnosisCode = dto.diagnosisCode;
     if (dto.treatmentGiven) obs.treatmentGiven = dto.treatmentGiven;
-    if (dto.followUpRequired !== undefined) obs.followUpRequired = dto.followUpRequired;
+    if (dto.followUpRequired !== undefined)
+      obs.followUpRequired = dto.followUpRequired;
     if (dto.followUpNotes) obs.followUpNotes = dto.followUpNotes;
     (obs as any).queueEntry = { id: dto.queueEntryId };
     (obs as any).patient = { id: dto.patientId };
@@ -32,7 +37,10 @@ export class ObservationsMapper
     return obs;
   }
 
-  async fromUpdateDto(id: string, dto: UpdateObservationDto): Promise<Observation | null> {
+  async fromUpdateDto(
+    id: string,
+    dto: UpdateObservationDto,
+  ): Promise<Observation | null> {
     const entity = await this.repository.findOne({ id });
     if (!entity) return null;
     return this.repository.assign(entity, this.entityFromDto(dto));
@@ -40,21 +48,39 @@ export class ObservationsMapper
 
   entityFromDto(dto: UpdateObservationDto) {
     const patch: Partial<Observation> = {};
-    if (dto.chiefComplaint !== undefined) patch.chiefComplaint = dto.chiefComplaint;
+    if (dto.chiefComplaint !== undefined)
+      patch.chiefComplaint = dto.chiefComplaint;
     if (dto.diagnosis !== undefined) patch.diagnosis = dto.diagnosis;
-    if (dto.treatmentGiven !== undefined) patch.treatmentGiven = dto.treatmentGiven;
-    if (dto.followUpRequired !== undefined) patch.followUpRequired = dto.followUpRequired;
-    if (dto.followUpNotes !== undefined) patch.followUpNotes = dto.followUpNotes;
+    if (dto.diagnosisCode !== undefined)
+      patch.diagnosisCode = dto.diagnosisCode;
+    if (dto.treatmentGiven !== undefined)
+      patch.treatmentGiven = dto.treatmentGiven;
+    if (dto.followUpRequired !== undefined)
+      patch.followUpRequired = dto.followUpRequired;
+    if (dto.followUpNotes !== undefined)
+      patch.followUpNotes = dto.followUpNotes;
     return patch;
   }
 
   filtersFromQueryDto(query: ObservationQueryDto): FilterQuery<Observation>[] {
-    const patientFilter: FilterQuery<Observation> = query.patientId && { patient: { id: query.patientId } };
-    const queueEntryFilter: FilterQuery<Observation> = query.queueEntryId && { queueEntry: { id: query.queueEntryId } };
-    const outreachFilter: FilterQuery<Observation> = query.outreachId && { outreach: { id: query.outreachId } };
-    const stationFilter: FilterQuery<Observation> = query.stationId && { station: { id: query.stationId } };
-    const recordedByFilter: FilterQuery<Observation> = query.recordedById && { recordedBy: { id: query.recordedById } };
-    const createdAt: FilterQuery<Observation> = query.createdAt && { createdAt: { $lt: query.createdAt } };
+    const patientFilter: FilterQuery<Observation> = query.patientId && {
+      patient: { id: query.patientId },
+    };
+    const queueEntryFilter: FilterQuery<Observation> = query.queueEntryId && {
+      queueEntry: { id: query.queueEntryId },
+    };
+    const outreachFilter: FilterQuery<Observation> = query.outreachId && {
+      outreach: { id: query.outreachId },
+    };
+    const stationFilter: FilterQuery<Observation> = query.stationId && {
+      station: { id: query.stationId },
+    };
+    const recordedByFilter: FilterQuery<Observation> = query.recordedById && {
+      recordedBy: { id: query.recordedById },
+    };
+    const createdAt: FilterQuery<Observation> = query.createdAt && {
+      createdAt: { $lt: query.createdAt },
+    };
     const globalSearch: FilterQuery<Observation> = query.search && {
       $or: [
         { chiefComplaint: { $ilike: '%' + query.search + '%' } },
@@ -63,8 +89,13 @@ export class ObservationsMapper
     };
 
     return [
-      patientFilter, queueEntryFilter, outreachFilter, stationFilter,
-      recordedByFilter, createdAt, globalSearch,
+      patientFilter,
+      queueEntryFilter,
+      outreachFilter,
+      stationFilter,
+      recordedByFilter,
+      createdAt,
+      globalSearch,
     ].filter((f) => !!f);
   }
 }

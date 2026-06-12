@@ -18,6 +18,7 @@ export enum RoleName {
   DATA_CLERK = 'DATA_CLERK',
   PHARMACIST = 'PHARMACIST',
   EVANGELIST = 'EVANGELIST',
+  PSYCHOLOGIST = 'PSYCHOLOGIST',
 }
 
 const CLINICAL_ROLES: string[] = [
@@ -178,15 +179,6 @@ export class CaslAbilityFactory {
       can([Action.Create, Action.Read, Action.Update], 'Observation', {
         outreach: { id: { $in: outreachIds } },
       } as any);
-      can([Action.Create, Action.Read, Action.Update], 'PHQ9Screening', {
-        outreach: { id: { $in: outreachIds } },
-      } as any);
-      can([Action.Create, Action.Read, Action.Update], 'GAD7Screening', {
-        outreach: { id: { $in: outreachIds } },
-      } as any);
-      can([Action.Create, Action.Read, Action.Update], 'PCL5Screening', {
-        outreach: { id: { $in: outreachIds } },
-      } as any);
     }
 
     // DOCTOR additionally handles lab results, external transfers, and prescriptions.
@@ -227,6 +219,24 @@ export class CaslAbilityFactory {
         outreach: { id: { $in: outreachIds } },
       } as any);
       can([Action.Create, Action.Read, Action.Update], 'EvangelismRecord', {
+        outreach: { id: { $in: outreachIds } },
+      } as any);
+    }
+
+    if (authUser.roles.includes(RoleName.PSYCHOLOGIST)) {
+      can(Action.Read, 'Outreach', { id: { $in: outreachIds } } as any);
+      can(Action.Read, 'Station');
+      can(Action.Read, 'Team');
+      can(Action.Read, 'QueueEntry', {
+        outreach: { id: { $in: outreachIds } },
+      } as any);
+      can(Action.Manage, 'PHQ9Screening', {
+        outreach: { id: { $in: outreachIds } },
+      } as any);
+      can(Action.Manage, 'GAD7Screening', {
+        outreach: { id: { $in: outreachIds } },
+      } as any);
+      can(Action.Manage, 'PCL5Screening', {
         outreach: { id: { $in: outreachIds } },
       } as any);
     }

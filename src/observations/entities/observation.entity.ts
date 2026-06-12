@@ -50,6 +50,9 @@ export class Observation {
   @Property({ type: 'text' })
   diagnosis: string;
 
+  @Property({ type: 'string', nullable: true })
+  diagnosisCode: string | null = null;
+
   @Property({ type: 'text', nullable: true })
   treatmentGiven: string | null = null;
 

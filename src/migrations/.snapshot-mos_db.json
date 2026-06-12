@@ -1542,6 +1542,22 @@
           "comment": null,
           "enumItems": [],
           "mappedType": "datetime"
+        },
+        "diagnosis_code": {
+          "name": "diagnosis_code",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "string"
         }
       },
       "name": "observations",
@@ -3600,6 +3616,146 @@
           "comment": null,
           "enumItems": [],
           "mappedType": "datetime"
+        },
+        "initial_of_participant": {
+          "name": "initial_of_participant",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "marital_status": {
+          "name": "marital_status",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [
+            "SINGLE",
+            "MARRIED",
+            "DIVORCED",
+            "WIDOWED"
+          ],
+          "mappedType": "enum"
+        },
+        "education_level": {
+          "name": "education_level",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [
+            "NONE",
+            "PRIMARY",
+            "SECONDARY",
+            "TERTIARY"
+          ],
+          "mappedType": "enum"
+        },
+        "occupation": {
+          "name": "occupation",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [
+            "NONE",
+            "PRIVATE",
+            "PUBLIC"
+          ],
+          "mappedType": "enum"
+        },
+        "division": {
+          "name": "division",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [
+            "I",
+            "II",
+            "III",
+            "IV"
+          ],
+          "mappedType": "enum"
+        },
+        "location_type": {
+          "name": "location_type",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [
+            "URBAN",
+            "RURAL_SEMI_URBAN"
+          ],
+          "mappedType": "enum"
+        },
+        "religion": {
+          "name": "religion",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [
+            "CATHOLIC",
+            "PROTESTANT",
+            "MUSLIM",
+            "TRADITIONAL",
+            "OTHER"
+          ],
+          "mappedType": "enum"
         }
       },
       "name": "phq9_screenings",
@@ -5172,6 +5328,22 @@
           "comment": null,
           "enumItems": [],
           "mappedType": "datetime"
+        },
+        "station_id": {
+          "name": "station_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "uuid"
         }
       },
       "name": "teams",
@@ -5186,6 +5358,16 @@
           "keyName": "teams_pkey",
           "unique": true,
           "primary": true
+        },
+        {
+          "columnNames": [
+            "station_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "teams_station_id_index",
+          "unique": false,
+          "primary": false
         }
       ],
       "checks": [],
@@ -5223,6 +5405,19 @@
           "constraintName": "teams_parent_id_foreign",
           "localTableName": "public.teams",
           "referencedTableName": "public.teams",
+          "referencedColumnNames": [
+            "id"
+          ],
+          "updateRule": "cascade",
+          "deleteRule": "set null"
+        },
+        "teams_station_id_foreign": {
+          "columnNames": [
+            "station_id"
+          ],
+          "constraintName": "teams_station_id_foreign",
+          "localTableName": "public.teams",
+          "referencedTableName": "public.stations",
           "referencedColumnNames": [
             "id"
           ],

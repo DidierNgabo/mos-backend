@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 
 export class CreateObservationDto {
   @ApiProperty()
@@ -31,6 +37,14 @@ export class CreateObservationDto {
   @IsString()
   @IsNotEmpty()
   diagnosis: string;
+
+  @ApiPropertyOptional({
+    nullable: true,
+    description: 'ICD-11 MMS code. Null indicates a custom diagnosis.',
+  })
+  @IsString()
+  @IsOptional()
+  diagnosisCode?: string | null;
 
   @ApiPropertyOptional()
   @IsString()

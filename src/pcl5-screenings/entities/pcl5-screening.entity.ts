@@ -76,7 +76,7 @@ export class PCL5Screening {
   @ManyToOne(() => User)
   recordedBy: User;
 
-  // Demographic fields (nullable — not collected for under-18)
+  // Legacy demographic copy retained for compatibility with existing PCL-5 data.
   @Property({ type: 'string', nullable: true })
   initialOfParticipant: string | null = null;
 
