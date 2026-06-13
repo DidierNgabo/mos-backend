@@ -57,6 +57,7 @@ export class QueueEntriesMapper implements EntityMapper<
   }
 
   filtersFromQueryDto(query: QueueEntryQueryDto): FilterQuery<QueueEntry>[] {
+    const search = query.search?.trim();
     const patientFilter: FilterQuery<QueueEntry> = query.patientId && {
       patient: { id: query.patientId },
     };
@@ -82,8 +83,21 @@ export class QueueEntriesMapper implements EntityMapper<
     const updatedAt: FilterQuery<QueueEntry> = query.updatedAt && {
       updatedAt: { $lt: query.updatedAt },
     };
-    const globalSearch: FilterQuery<QueueEntry> = query.search && {
-      $or: [{ chiefComplaint: { $ilike: '%' + query.search + '%' } }],
+    const globalSearch: FilterQuery<QueueEntry> = search && {
+      $or: [
+        { patient: { firstName: { $ilike: `%${search}%` } } },
+        { patient: { lastName: { $ilike: `%${search}%` } } },
+        { patient: { registrationNumber: { $ilike: `%${search}%` } } },
+        { chiefComplaint: { $ilike: `%${search}%` } },
+        {
+          $and: search.split(/\s+/).map((part) => ({
+            $or: [
+              { patient: { firstName: { $ilike: `%${part}%` } } },
+              { patient: { lastName: { $ilike: `%${part}%` } } },
+            ],
+          })),
+        },
+      ],
     };
 
     return [
