@@ -4,6 +4,7 @@ import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { AuthenticatedUser } from 'src/auth/auth.types';
 import { Action } from 'src/auth/casl/ability.types';
 import { CheckPolicies } from 'src/auth/casl/check-policies.decorator';
+import { BulkCreateLabResultDto } from './dto/bulk-create-lab-result.dto';
 import { CreateLabResultDto } from './dto/create-lab-result.dto';
 import { LabResultQueryDto } from './dto/query-lab-result.dto';
 import { UpdateLabResultDto } from './dto/update-lab-result.dto';
@@ -18,6 +19,12 @@ export class LabResultsController {
   @CheckPolicies((ability) => ability.rulesFor(Action.Create, 'LabResult').some((r) => !r.inverted))
   create(@Body() dto: CreateLabResultDto, @CurrentUser() user: AuthenticatedUser) {
     return this.labResultsService.createLabResult(dto, user.id);
+  }
+
+  @Post('bulk')
+  @CheckPolicies((ability) => ability.rulesFor(Action.Create, 'LabResult').some((r) => !r.inverted))
+  createBulk(@Body() dto: BulkCreateLabResultDto, @CurrentUser() user: AuthenticatedUser) {
+    return this.labResultsService.createManyLabResults(dto, user.id);
   }
 
   @Get()
