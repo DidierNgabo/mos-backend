@@ -72,9 +72,10 @@ export class VitalSignsService extends MikroOrmEntityService<
     const recordedBy = await this.userRepository.findOne({ id: recordedById });
     if (!recordedBy) throw new BadRequestException('Recorder user not found');
 
-    const bmi = parseFloat(
-      (dto.weight / Math.pow(dto.height / 100, 2)).toFixed(2),
-    );
+    const bmi =
+      dto.weight != null && dto.height != null
+        ? parseFloat((dto.weight / Math.pow(dto.height / 100, 2)).toFixed(2))
+        : null;
 
     const vs = this.vitalSignMapper.fromCreateDto(dto);
     vs.id = randomUUID();

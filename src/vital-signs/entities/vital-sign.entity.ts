@@ -47,26 +47,26 @@ export class VitalSign {
   @ManyToOne(() => QueueEntry, { nullable: true })
   queueEntry: QueueEntry | null = null;
 
-  @Property({ type: 'int' })
-  bloodPressureSystolic: number;
+  @Property({ type: 'int', nullable: true })
+  bloodPressureSystolic: number | null = null;
 
-  @Property({ type: 'int' })
-  bloodPressureDiastolic: number;
+  @Property({ type: 'int', nullable: true })
+  bloodPressureDiastolic: number | null = null;
 
-  @Property({ columnType: 'numeric(5,1)' })
-  pulseRate: number;
+  @Property({ columnType: 'numeric(5,1)', nullable: true })
+  pulseRate: number | null = null;
 
   @Property({ columnType: 'numeric(4,1)' })
   temperature: number;
 
-  @Property({ columnType: 'numeric(5,2)' })
-  weight: number;
+  @Property({ columnType: 'numeric(5,2)', nullable: true })
+  weight: number | null = null;
 
-  @Property({ columnType: 'numeric(5,2)' })
-  height: number;
+  @Property({ columnType: 'numeric(5,2)', nullable: true })
+  height: number | null = null;
 
-  @Property({ columnType: 'numeric(5,2)' })
-  bmi: number;
+  @Property({ columnType: 'numeric(5,2)', nullable: true })
+  bmi: number | null = null;
 
   @Property({ columnType: 'numeric(4,1)', nullable: true })
   oxygenSaturation?: number | null;

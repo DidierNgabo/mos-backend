@@ -36,6 +36,10 @@ export class UserQueryDto extends PaginationQueryDto {
   stationId?: string;
 
   @IsOptional()
+  @IsUUID()
+  outreachId?: string;
+
+  @IsOptional()
   @IsBoolean()
   @Transform(({ value }) => QueryBooleanTransform(value))
   isActive?: boolean;

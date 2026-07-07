@@ -31,6 +31,21 @@
 $ yarn install
 ```
 
+## Statistics assistant configuration
+
+The statistics chat endpoint uses the OpenAI SDK only on the server. Add these
+values to the backend environment (never to the frontend):
+
+```bash
+OPENAI_API_KEY=your_api_key
+OPENAI_MODEL=gpt-5.4-mini
+OPENAI_REQUEST_TIMEOUT_MS=60000
+```
+
+`OPENAI_MODEL` and `OPENAI_REQUEST_TIMEOUT_MS` are optional and use the values
+shown above by default. The endpoint emits an SSE `error` event when no API key
+is configured.
+
 ## Compile and run the project
 
 ```bash

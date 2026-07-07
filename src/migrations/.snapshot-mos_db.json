@@ -3915,7 +3915,7 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": false,
+          "nullable": true,
           "unique": false,
           "length": null,
           "precision": null,
@@ -4072,6 +4072,22 @@
           "comment": null,
           "enumItems": [],
           "mappedType": "datetime"
+        },
+        "custom_medication_name": {
+          "name": "custom_medication_name",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "string"
         }
       },
       "name": "prescriptions",
@@ -4160,7 +4176,7 @@
             "id"
           ],
           "updateRule": "cascade",
-          "deleteRule": "no action"
+          "deleteRule": "set null"
         },
         "prescriptions_prescribed_by_id_foreign": {
           "columnNames": [
@@ -5358,16 +5374,6 @@
           "keyName": "teams_pkey",
           "unique": true,
           "primary": true
-        },
-        {
-          "columnNames": [
-            "station_id"
-          ],
-          "composite": false,
-          "constraint": false,
-          "keyName": "teams_station_id_index",
-          "unique": false,
-          "primary": false
         }
       ],
       "checks": [],
@@ -6221,7 +6227,7 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": false,
+          "nullable": true,
           "unique": false,
           "length": null,
           "precision": 32,
@@ -6237,7 +6243,7 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": false,
+          "nullable": true,
           "unique": false,
           "length": null,
           "precision": 32,
@@ -6253,7 +6259,7 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": false,
+          "nullable": true,
           "unique": false,
           "length": null,
           "precision": 5,
@@ -6285,7 +6291,7 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": false,
+          "nullable": true,
           "unique": false,
           "length": null,
           "precision": 5,
@@ -6301,7 +6307,7 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": false,
+          "nullable": true,
           "unique": false,
           "length": null,
           "precision": 5,
@@ -6317,7 +6323,7 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": false,
+          "nullable": true,
           "unique": false,
           "length": null,
           "precision": 5,

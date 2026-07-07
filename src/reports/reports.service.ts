@@ -268,10 +268,15 @@ export class ReportsService {
         data.byTestType.map((r) => ({
           test_type: r.testType,
           total_tests: r.totalTests,
-          positive_count: r.positiveCount,
-          positivity_rate: r.positivityRate,
+          abnormal_count: r.abnormalCount,
+          abnormal_rate: r.abnormalRatePercent,
         })),
-        { test_type: 'Test Type', total_tests: 'Total Tests', positive_count: 'Positive', positivity_rate: 'Positivity Rate (%)' },
+        {
+          test_type: 'Test Type',
+          total_tests: 'Total Tests',
+          abnormal_count: 'Abnormal',
+          abnormal_rate: 'Abnormal Rate (%)',
+        },
       );
     }
 
@@ -280,7 +285,10 @@ export class ReportsService {
         columns: [
           statBox('Total Tests', data.totalTests),
           statBox('Abnormal Results', data.totalAbnormal),
-          statBox('Overall Abnormal Rate', `${data.overallAbnormalRate}%`),
+          statBox(
+            'Overall Abnormal Rate',
+            `${data.overallAbnormalRatePercent}%`,
+          ),
         ],
         margin: [0, 0, 0, 16],
       },
@@ -290,7 +298,12 @@ export class ReportsService {
           widths: ['*', 80, 80, 80],
           body: [
             tableHeader(['Test Type', 'Total', 'Abnormal', 'Rate']),
-            ...data.byTestType.map((r) => [r.testType, String(r.totalTests), String(r.positiveCount), `${r.positivityRate}%`]),
+            ...data.byTestType.map((r) => [
+              r.testType,
+              String(r.totalTests),
+              String(r.abnormalCount),
+              `${r.abnormalRatePercent}%`,
+            ]),
           ],
         },
         layout: 'lightHorizontalLines',
@@ -321,7 +334,7 @@ export class ReportsService {
             ...data.doctors.map((d) => [
               d.doctorName,
               String(d.consultationsCount),
-              String(d.avgConsultationMinutes),
+              String(d.avgQueueToObservationMinutes),
               `${d.followUpRate}%`,
               `${d.transferRate}%`,
               String(d.formsCompleted),
@@ -468,7 +481,11 @@ export class ReportsService {
           widths: ['*', 80, 80],
           body: [
             tableHeader(['Indicator', 'Count', 'Threshold']),
-            ['Overweight (BMI ≥ 25)', String(data.overweightCount), 'BMI ≥ 25'],
+            [
+              'Overweight (BMI 25–29.9)',
+              String(data.overweightCount),
+              'BMI 25–29.9',
+            ],
             ['Obese (BMI ≥ 30)', String(data.obeseCount), 'BMI ≥ 30'],
             ['High Glucose (> 11.1 mmol/L)', String(data.highGlucoseCount), '> 11.1'],
             ['Low SpO2 (< 95%)', String(data.lowOxygenCount), '< 95%'],

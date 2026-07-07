@@ -25,7 +25,8 @@ export class PrescriptionsMapper
     (p as any).queueEntry = { id: dto.queueEntryId };
     (p as any).patient = { id: dto.patientId };
     (p as any).outreach = { id: dto.outreachId };
-    (p as any).pharmacyStock = { id: dto.pharmacyStockId };
+    if (dto.pharmacyStockId) (p as any).pharmacyStock = { id: dto.pharmacyStockId };
+    if (dto.customMedicationName) p.customMedicationName = dto.customMedicationName;
     return p;
   }
 

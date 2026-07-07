@@ -17,10 +17,16 @@ export class CreatePrescriptionDto {
   @IsNotEmpty()
   outreachId: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsUUID()
+  pharmacyStockId?: string;
+
+  @ApiPropertyOptional({ example: 'Ibuprofen 400mg' })
+  @IsOptional()
+  @IsString()
   @IsNotEmpty()
-  pharmacyStockId: string;
+  customMedicationName?: string;
 
   @ApiProperty({ example: '500mg twice daily' })
   @IsString()

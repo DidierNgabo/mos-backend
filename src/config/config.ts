@@ -34,3 +34,9 @@ export const MAIL_FROM_NAME = process.env.MAIL_FROM_NAME || 'MOS';
 export const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL;
 export const SUPER_ADMIN_FIRST_NAME = process.env.SUPER_ADMIN_FIRST_NAME;
 export const SUPER_ADMIN_LAST_NAME = process.env.SUPER_ADMIN_LAST_NAME;
+
+export const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+export const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-5.4-mini';
+export const OPENAI_REQUEST_TIMEOUT_MS = Number(
+  process.env.OPENAI_REQUEST_TIMEOUT_MS || 600000,
+);

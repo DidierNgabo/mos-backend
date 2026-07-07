@@ -29,10 +29,14 @@ export class VitalSignMapper
     const { patientId: _patientId, stationId: _stationId, ...rest } = dto;
     this.repository.assign(vs, rest as Partial<VitalSign>);
 
-    const newWeight = dto.weight ?? vs.weight;
-    const newHeight = dto.height ?? vs.height;
     if (dto.weight !== undefined || dto.height !== undefined) {
-      vs.bmi = parseFloat((newWeight / Math.pow(newHeight / 100, 2)).toFixed(2));
+      const newWeight = dto.weight ?? vs.weight;
+      const newHeight = dto.height ?? vs.height;
+      if (newWeight != null && newHeight != null) {
+        vs.bmi = parseFloat((newWeight / Math.pow(newHeight / 100, 2)).toFixed(2));
+      } else {
+        vs.bmi = null;
+      }
     }
 
     return vs;

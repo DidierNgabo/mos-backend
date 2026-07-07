@@ -76,6 +76,9 @@ export class UserMapper
     const stationId: FilterQuery<User> = query.stationId && {
       station: { id: query.stationId },
     };
+    const outreachId: FilterQuery<User> = query.outreachId && {
+      outreaches: { id: query.outreachId },
+    };
     const isActive: FilterQuery<User> =
       query.isActive !== undefined && { isActive: query.isActive };
     const mustChangePassword: FilterQuery<User> =
@@ -104,6 +107,7 @@ export class UserMapper
       userId,
       roleId,
       stationId,
+      outreachId,
       isActive,
       mustChangePassword,
       createdAt,

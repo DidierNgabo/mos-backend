@@ -13,10 +13,10 @@ export class CreateLabResultDto {
   @IsNotEmpty()
   patientId: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsUUID()
-  @IsNotEmpty()
-  stationId: string;
+  @IsOptional()
+  stationId?: string;
 
   @ApiProperty()
   @IsUUID()

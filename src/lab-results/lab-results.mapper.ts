@@ -27,7 +27,7 @@ export class LabResultsMapper
     if (dto.notes) lr.notes = dto.notes;
     (lr as any).queueEntry = { id: dto.queueEntryId };
     (lr as any).patient = { id: dto.patientId };
-    (lr as any).station = { id: dto.stationId };
+    if (dto.stationId) (lr as any).station = { id: dto.stationId };
     (lr as any).outreach = { id: dto.outreachId };
     return lr;
   }

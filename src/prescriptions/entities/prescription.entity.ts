@@ -50,8 +50,11 @@ export class Prescription {
   @ManyToOne(() => Outreach, { index: true })
   outreach: Outreach;
 
-  @ManyToOne(() => PharmacyStock)
-  pharmacyStock: PharmacyStock;
+  @ManyToOne(() => PharmacyStock, { nullable: true })
+  pharmacyStock: PharmacyStock | null = null;
+
+  @Property({ type: 'string', nullable: true })
+  customMedicationName: string | null = null;
 
   @Property({ type: 'string' })
   dosage: string;

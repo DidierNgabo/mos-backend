@@ -25,6 +25,7 @@ import { TeamsModule } from './teams/teams.module';
 import { TransfersModule } from './transfers/transfers.module';
 import { UsersModule } from './users/users.module';
 import { VitalSignsModule } from './vital-signs/vital-signs.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { VitalSignsModule } from './vital-signs/vital-signs.module';
     StatsModule,
     ReportsModule,
     EvangelismModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [AppService],
