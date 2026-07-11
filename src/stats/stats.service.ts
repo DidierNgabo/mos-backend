@@ -2133,6 +2133,7 @@ export class StatsService {
             knex.raw('count(p.id) AS registration_count'),
           )
           .where('p.outreach_id', outreachId),
+        'p.created_at',
       )
         .groupBy('u.id', 'u.first_name', 'u.last_name')
         .orderBy('registration_count', 'desc')
