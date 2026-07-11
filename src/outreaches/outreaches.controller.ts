@@ -11,6 +11,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOperation } from '@nestjs/swagger';
+import { Public } from 'src/auth/decorators/public.decorator';
 import { Action } from 'src/auth/casl/ability.types';
 import { CheckPolicies } from 'src/auth/casl/check-policies.decorator';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
@@ -36,8 +37,8 @@ export class OutreachesController {
     return this.outreachesService.createOutreach(dto, userId);
   }
 
+  @Public()
   @Get()
-  @CheckPolicies((ability) => ability.rulesFor(Action.Read, 'Outreach').some((r) => !r.inverted))
   @ApiOperation({ summary: 'List outreaches with filtering and pagination' })
   findAll(@Query() query: OutreachQueryDto) {
     return this.outreachesService.findAll(query);

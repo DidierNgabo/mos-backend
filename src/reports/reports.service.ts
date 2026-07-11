@@ -35,19 +35,60 @@ const PDF_STYLES: TDocumentDefinitions['styles'] = {
   reportTitle: { fontSize: 20, bold: true, margin: [0, 4, 0, 4] },
   meta: { fontSize: 9, color: '#888780', margin: [0, 1, 0, 1] },
   sectionHeader: { fontSize: 12, bold: true, margin: [0, 12, 0, 4] },
-  sectionTitle: { fontSize: 13, bold: true, color: BRAND_BLUE, margin: [0, 16, 0, 6] },
-  tableHeader: { bold: true, fillColor: BRAND_BLUE, color: '#ffffff', fontSize: 9 },
+  sectionTitle: {
+    fontSize: 13,
+    bold: true,
+    color: BRAND_BLUE,
+    margin: [0, 16, 0, 6],
+  },
+  tableHeader: {
+    bold: true,
+    fillColor: BRAND_BLUE,
+    color: '#ffffff',
+    fontSize: 9,
+  },
   statLabel: { fontSize: 9, color: '#888780' },
   statValue: { fontSize: 18, bold: true },
-  footer: { fontSize: 8, color: '#888780', italics: true, margin: [0, 20, 0, 0] },
+  footer: {
+    fontSize: 8,
+    color: '#888780',
+    italics: true,
+    margin: [0, 20, 0, 0],
+  },
 };
 
 function divider(): Content {
-  return { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1, lineColor: BRAND_GREEN }], margin: [0, 4, 0, 12] };
+  return {
+    canvas: [
+      {
+        type: 'line',
+        x1: 0,
+        y1: 0,
+        x2: 515,
+        y2: 0,
+        lineWidth: 1,
+        lineColor: BRAND_GREEN,
+      },
+    ],
+    margin: [0, 4, 0, 12],
+  };
 }
 
 function sectionDivider(): Content {
-  return { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 0.5, lineColor: '#CCCCCC' }], margin: [0, 8, 0, 4] };
+  return {
+    canvas: [
+      {
+        type: 'line',
+        x1: 0,
+        y1: 0,
+        x2: 515,
+        y2: 0,
+        lineWidth: 0.5,
+        lineColor: '#CCCCCC',
+      },
+    ],
+    margin: [0, 8, 0, 4],
+  };
 }
 
 function statBox(label: string, value: string | number): Content {
@@ -77,7 +118,10 @@ function buildPdf(
       { text: `Generated: ${new Date().toLocaleDateString()}`, style: 'meta' },
       divider(),
       ...content,
-      { text: 'Confidential — for internal use only', style: 'footer' } as Content,
+      {
+        text: 'Confidential — for internal use only',
+        style: 'footer',
+      } as Content,
     ],
     styles: PDF_STYLES,
     defaultStyle: { font: 'Roboto', fontSize: 10 },
@@ -88,7 +132,10 @@ function buildPdf(
   return pdfMake.createPdf(docDef).getBuffer() as Promise<Buffer>;
 }
 
-function buildCsv(rows: Record<string, unknown>[], columns: Record<string, string>): Buffer {
+function buildCsv(
+  rows: Record<string, unknown>[],
+  columns: Record<string, string>,
+): Buffer {
   const csv = stringify(rows, { header: true, columns });
   return Buffer.from(csv);
 }
@@ -102,7 +149,10 @@ export class ReportsService {
 
   // ─── Summary (PDF only) ────────────────────────────────────────────────────
 
-  async generateSummaryReport(outreachId: string, outreachName: string): Promise<Buffer> {
+  async generateSummaryReport(
+    outreachId: string,
+    outreachName: string,
+  ): Promise<Buffer> {
     const stats = await this.statsService.getAdminStats(outreachId);
 
     const content: Content[] = [
@@ -145,11 +195,31 @@ export class ReportsService {
           widths: ['*', 80],
           body: [
             tableHeader(['Station', 'Waiting / In Service']),
-            ...stats.activeQueueLengths.map((q) => [q.stationName, String(q.count)]),
+            ...stats.activeQueueLengths.map((q) => [
+              q.stationName,
+              String(q.count),
+            ]),
           ],
         },
         layout: 'lightHorizontalLines',
+        margin: [0, 0, 0, 16],
       } as Content,
+      { text: 'Station Activity (All Time)', style: 'sectionHeader' },
+      stats.stationActivity.length > 0
+        ? ({
+            table: {
+              widths: ['*', 80],
+              body: [
+                tableHeader(['Station', 'Total Visits']),
+                ...stats.stationActivity.map((s) => [
+                  s.stationName,
+                  String(s.visitCount),
+                ]),
+              ],
+            },
+            layout: 'lightHorizontalLines',
+          } as Content)
+        : ({ text: 'No station visits recorded.', style: 'meta' } as Content),
     ];
 
     return buildPdf('Outreach Summary Report', outreachName, content);
@@ -164,7 +234,11 @@ export class ReportsService {
     startDate?: Date,
     endDate?: Date,
   ): Promise<Buffer> {
-    const data = await this.statsService.getDiseaseStats(outreachId, startDate, endDate);
+    const data = await this.statsService.getDiseaseStats(
+      outreachId,
+      startDate,
+      endDate,
+    );
 
     if (format === 'csv') {
       return buildCsv(
@@ -175,19 +249,34 @@ export class ReportsService {
           male: d.maleCount,
           female: d.femaleCount,
         })),
-        { diagnosis: 'Diagnosis', total: 'Total', percent_of_patients: '% of Patients', male: 'Male', female: 'Female' },
+        {
+          diagnosis: 'Diagnosis',
+          total: 'Total',
+          percent_of_patients: '% of Patients',
+          male: 'Male',
+          female: 'Female',
+        },
       );
     }
 
     const content: Content[] = [
-      { columns: [statBox('Total Observations', data.totalObservations)], margin: [0, 0, 0, 16] },
+      {
+        columns: [statBox('Total Observations', data.totalObservations)],
+        margin: [0, 0, 0, 16],
+      },
       { text: 'Top Diagnoses', style: 'sectionHeader' },
       {
         table: {
           widths: ['*', 50, 60, 60, 60],
           body: [
             tableHeader(['Diagnosis', 'Count', '% Patients', 'Male', 'Female']),
-            ...data.topDiagnoses.map((d) => [d.diagnosis, String(d.count), `${d.percentOfPatients}%`, String(d.maleCount), String(d.femaleCount)]),
+            ...data.topDiagnoses.map((d) => [
+              d.diagnosis,
+              String(d.count),
+              `${d.percentOfPatients}%`,
+              String(d.maleCount),
+              String(d.femaleCount),
+            ]),
           ],
         },
         layout: 'lightHorizontalLines',
@@ -205,7 +294,11 @@ export class ReportsService {
     startDate?: Date,
     endDate?: Date,
   ): Promise<Buffer> {
-    const data = await this.statsService.getMentalHealthStats(outreachId, startDate, endDate);
+    const data = await this.statsService.getMentalHealthStats(
+      outreachId,
+      startDate,
+      endDate,
+    );
 
     const content: Content[] = [
       {
@@ -261,7 +354,11 @@ export class ReportsService {
     startDate?: Date,
     endDate?: Date,
   ): Promise<Buffer> {
-    const data = await this.statsService.getLabStats(outreachId, startDate, endDate);
+    const data = await this.statsService.getLabStats(
+      outreachId,
+      startDate,
+      endDate,
+    );
 
     if (format === 'csv') {
       return buildCsv(
@@ -321,16 +418,30 @@ export class ReportsService {
     startDate?: Date,
     endDate?: Date,
   ): Promise<Buffer> {
-    const data = await this.statsService.getDoctorPerformanceStats(outreachId, startDate, endDate);
+    const data = await this.statsService.getDoctorPerformanceStats(
+      outreachId,
+      startDate,
+      endDate,
+    );
 
     const content: Content[] = [
-      { columns: [statBox('Doctors Active', data.doctors.length)], margin: [0, 0, 0, 16] },
+      {
+        columns: [statBox('Doctors Active', data.doctors.length)],
+        margin: [0, 0, 0, 16],
+      },
       { text: 'Doctor Performance', style: 'sectionHeader' },
       {
         table: {
           widths: ['*', 60, 60, 50, 50, 50],
           body: [
-            tableHeader(['Doctor', 'Consultations', 'Avg (min)', 'Follow-up %', 'Transfer %', 'Forms']),
+            tableHeader([
+              'Doctor',
+              'Consultations',
+              'Avg (min)',
+              'Follow-up %',
+              'Transfer %',
+              'Forms',
+            ]),
             ...data.doctors.map((d) => [
               d.doctorName,
               String(d.consultationsCount),
@@ -357,7 +468,11 @@ export class ReportsService {
     startDate?: Date,
     endDate?: Date,
   ): Promise<Buffer> {
-    const data = await this.statsService.getPharmacyStats(outreachId, startDate, endDate);
+    const data = await this.statsService.getPharmacyStats(
+      outreachId,
+      startDate,
+      endDate,
+    );
 
     if (format === 'csv') {
       return buildCsv(
@@ -385,7 +500,10 @@ export class ReportsService {
           widths: ['*', 100],
           body: [
             tableHeader(['Medication', 'Units Dispensed']),
-            ...data.topMedications.map((m) => [m.medicationName, String(m.totalDispensed)]),
+            ...data.topMedications.map((m) => [
+              m.medicationName,
+              String(m.totalDispensed),
+            ]),
           ],
         },
         layout: 'lightHorizontalLines',
@@ -397,7 +515,11 @@ export class ReportsService {
           widths: ['*', 80, 80],
           body: [
             tableHeader(['Medication', 'In Stock', 'Threshold']),
-            ...data.lowStockItems.map((m) => [m.medicationName, String(m.quantityInStock), String(m.threshold)]),
+            ...data.lowStockItems.map((m) => [
+              m.medicationName,
+              String(m.quantityInStock),
+              String(m.threshold),
+            ]),
           ],
         },
         layout: 'lightHorizontalLines',
@@ -409,7 +531,11 @@ export class ReportsService {
 
   // ─── Transfers (CSV only) ─────────────────────────────────────────────────
 
-  async generateTransfersReport(outreachId: string, startDate?: Date, endDate?: Date): Promise<Buffer> {
+  async generateTransfersReport(
+    outreachId: string,
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<Buffer> {
     const knex = this.em.getKnex();
     const rows = await knex('transfers as t')
       .join('patients as p', 'p.id', 't.patient_id')
@@ -427,7 +553,12 @@ export class ReportsService {
       .where('t.outreach_id', outreachId)
       .modify((qb) => {
         if (startDate) qb.where('t.created_at', '>=', startDate);
-        if (endDate) qb.where('t.created_at', '<', new Date(endDate.getTime() + 86_400_000));
+        if (endDate)
+          qb.where(
+            't.created_at',
+            '<',
+            new Date(endDate.getTime() + 86_400_000),
+          );
       })
       .orderBy('t.created_at', 'asc');
 
@@ -463,7 +594,11 @@ export class ReportsService {
     startDate?: Date,
     endDate?: Date,
   ): Promise<Buffer> {
-    const data = await this.statsService.getVitalsStats(outreachId, startDate, endDate);
+    const data = await this.statsService.getVitalsStats(
+      outreachId,
+      startDate,
+      endDate,
+    );
 
     const content: Content[] = [
       {
@@ -487,7 +622,11 @@ export class ReportsService {
               'BMI 25–29.9',
             ],
             ['Obese (BMI ≥ 30)', String(data.obeseCount), 'BMI ≥ 30'],
-            ['High Glucose (> 11.1 mmol/L)', String(data.highGlucoseCount), '> 11.1'],
+            [
+              'High Glucose (> 11.1 mmol/L)',
+              String(data.highGlucoseCount),
+              '> 11.1',
+            ],
             ['Low SpO2 (< 95%)', String(data.lowOxygenCount), '< 95%'],
             ['Fever (≥ 37.5°C)', String(data.feverCount), '≥ 37.5°C'],
           ],
@@ -501,8 +640,16 @@ export class ReportsService {
 
   // ─── Impact (per-outreach PDF only) ──────────────────────────────────────
 
-  async generateImpactReport(outreachId: string, startDate?: Date, endDate?: Date): Promise<Buffer> {
-    const data = await this.statsService.getImpactStats(outreachId, startDate, endDate);
+  async generateImpactReport(
+    outreachId: string,
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<Buffer> {
+    const data = await this.statsService.getImpactStats(
+      outreachId,
+      startDate,
+      endDate,
+    );
 
     const dateRangeLine = data.dateRange.start
       ? `${data.dateRange.start}  →  ${data.dateRange.end ?? 'present'}`
@@ -537,14 +684,25 @@ export class ReportsService {
             layout: 'lightHorizontalLines',
             margin: [0, 0, 0, 16],
           } as Content)
-        : ({ text: 'No attendance data for this period.', style: 'meta', margin: [0, 0, 0, 16] } as Content),
+        : ({
+            text: 'No attendance data for this period.',
+            style: 'meta',
+            margin: [0, 0, 0, 16],
+          } as Content),
       { text: 'Geographic Distribution (Top 20)', style: 'sectionHeader' },
       data.patients.byLocation.length > 0
         ? ({
             table: {
               widths: [80, 80, 80, 80, 80, 60],
               body: [
-                tableHeader(['Province', 'District', 'Sector', 'Cell', 'Village', 'Count']),
+                tableHeader([
+                  'Province',
+                  'District',
+                  'Sector',
+                  'Cell',
+                  'Village',
+                  'Count',
+                ]),
                 ...data.patients.byLocation.map((l) => [
                   l.province,
                   l.district,
@@ -558,7 +716,11 @@ export class ReportsService {
             layout: 'lightHorizontalLines',
             margin: [0, 0, 0, 16],
           } as Content)
-        : ({ text: 'No location data.', style: 'meta', margin: [0, 0, 0, 16] } as Content),
+        : ({
+            text: 'No location data.',
+            style: 'meta',
+            margin: [0, 0, 0, 16],
+          } as Content),
       { text: 'Gender Distribution', style: 'sectionHeader' },
       {
         table: {
@@ -592,7 +754,11 @@ export class ReportsService {
             layout: 'lightHorizontalLines',
             margin: [0, 0, 0, 24],
           } as Content)
-        : ({ text: 'No age data.', style: 'meta', margin: [0, 0, 0, 24] } as Content),
+        : ({
+            text: 'No age data.',
+            style: 'meta',
+            margin: [0, 0, 0, 24],
+          } as Content),
 
       // ── Section 2: Clinical Findings ─────────────────────────────────────
       { text: 'Section 2 — Clinical Findings', style: 'sectionTitle' },
@@ -613,7 +779,13 @@ export class ReportsService {
             table: {
               widths: ['*', 70, 70, 70, 70],
               body: [
-                tableHeader(['Age Group', 'Underweight', 'Normal', 'Overweight', 'Obese']),
+                tableHeader([
+                  'Age Group',
+                  'Underweight',
+                  'Normal',
+                  'Overweight',
+                  'Obese',
+                ]),
                 ...data.clinical.bmiByAgeGroup.map((b) => [
                   b.ageGroup,
                   String(b.underweight),
@@ -626,18 +798,37 @@ export class ReportsService {
             layout: 'lightHorizontalLines',
             margin: [0, 0, 0, 16],
           } as Content)
-        : ({ text: 'No BMI data for this period.', style: 'meta', margin: [0, 0, 0, 16] } as Content),
+        : ({
+            text: 'No BMI data for this period.',
+            style: 'meta',
+            margin: [0, 0, 0, 16],
+          } as Content),
       { text: 'Chronic Conditions Detected', style: 'sectionHeader' },
       {
         table: {
           widths: ['*', 100],
           body: [
             tableHeader(['Condition', 'Patients Affected']),
-            ['Hypertension (BP ≥ 140/90)', `${data.clinical.chronicConditions.hypertension}${pctRow(data.patients.total, data.clinical.chronicConditions.hypertension)}`],
-            ['Diabetes (Glucose > 11.1 mmol/L)', `${data.clinical.chronicConditions.diabetes}${pctRow(data.patients.total, data.clinical.chronicConditions.diabetes)}`],
-            ['Tuberculosis (Screen Positive)', `${data.clinical.chronicConditions.tuberculosis}${pctRow(data.patients.total, data.clinical.chronicConditions.tuberculosis)}`],
-            ['Malaria (Screen Positive)', `${data.clinical.chronicConditions.malaria}${pctRow(data.patients.total, data.clinical.chronicConditions.malaria)}`],
-            ['HIV (Screen Positive)', `${data.clinical.chronicConditions.hiv}${pctRow(data.patients.total, data.clinical.chronicConditions.hiv)}`],
+            [
+              'Hypertension (BP ≥ 140/90)',
+              `${data.clinical.chronicConditions.hypertension}${pctRow(data.patients.total, data.clinical.chronicConditions.hypertension)}`,
+            ],
+            [
+              'Diabetes (Glucose > 11.1 mmol/L)',
+              `${data.clinical.chronicConditions.diabetes}${pctRow(data.patients.total, data.clinical.chronicConditions.diabetes)}`,
+            ],
+            [
+              'Tuberculosis (Screen Positive)',
+              `${data.clinical.chronicConditions.tuberculosis}${pctRow(data.patients.total, data.clinical.chronicConditions.tuberculosis)}`,
+            ],
+            [
+              'Malaria (Screen Positive)',
+              `${data.clinical.chronicConditions.malaria}${pctRow(data.patients.total, data.clinical.chronicConditions.malaria)}`,
+            ],
+            [
+              'HIV (Screen Positive)',
+              `${data.clinical.chronicConditions.hiv}${pctRow(data.patients.total, data.clinical.chronicConditions.hiv)}`,
+            ],
           ],
         },
         layout: 'lightHorizontalLines',
@@ -650,13 +841,20 @@ export class ReportsService {
               widths: ['*', 80],
               body: [
                 tableHeader(['Diagnosis', 'Count']),
-                ...data.clinical.topDiagnoses.map((d) => [d.diagnosis, String(d.count)]),
+                ...data.clinical.topDiagnoses.map((d) => [
+                  d.diagnosis,
+                  String(d.count),
+                ]),
               ],
             },
             layout: 'lightHorizontalLines',
             margin: [0, 0, 0, 24],
           } as Content)
-        : ({ text: 'No diagnoses recorded.', style: 'meta', margin: [0, 0, 0, 24] } as Content),
+        : ({
+            text: 'No diagnoses recorded.',
+            style: 'meta',
+            margin: [0, 0, 0, 24],
+          } as Content),
 
       // ── Section 3: Service Delivery ──────────────────────────────────────
       { text: 'Section 3 — Service Delivery', style: 'sectionTitle' },
@@ -666,7 +864,10 @@ export class ReportsService {
           statBox('Avg Queue Wait (min)', data.service.avgQueueWaitMinutes),
           statBox('Avg Patients / Doctor', data.service.avgPatientsPerDoctor),
           statBox('Items Dispensed', data.service.totalDispensed),
-          statBox('Cancelled Prescriptions', data.service.cancelledPrescriptions),
+          statBox(
+            'Cancelled Prescriptions',
+            data.service.cancelledPrescriptions,
+          ),
         ],
         margin: [0, 0, 0, 16],
       },
@@ -677,13 +878,20 @@ export class ReportsService {
               widths: ['*', 100],
               body: [
                 tableHeader(['Doctor', 'Consultations']),
-                ...data.service.topDoctors.map((d) => [d.doctorName, String(d.observationCount)]),
+                ...data.service.topDoctors.map((d) => [
+                  d.doctorName,
+                  String(d.observationCount),
+                ]),
               ],
             },
             layout: 'lightHorizontalLines',
             margin: [0, 0, 0, 16],
           } as Content)
-        : ({ text: 'No doctor data for this period.', style: 'meta', margin: [0, 0, 0, 16] } as Content),
+        : ({
+            text: 'No doctor data for this period.',
+            style: 'meta',
+            margin: [0, 0, 0, 16],
+          } as Content),
       { text: 'Top Data Clerks', style: 'sectionHeader' },
       data.service.topDataClerks.length > 0
         ? ({
@@ -691,13 +899,20 @@ export class ReportsService {
               widths: ['*', 100],
               body: [
                 tableHeader(['Clerk', 'Patients Registered']),
-                ...data.service.topDataClerks.map((c) => [c.userName, String(c.registrationCount)]),
+                ...data.service.topDataClerks.map((c) => [
+                  c.userName,
+                  String(c.registrationCount),
+                ]),
               ],
             },
             layout: 'lightHorizontalLines',
             margin: [0, 0, 0, 16],
           } as Content)
-        : ({ text: 'No clerk data for this period.', style: 'meta', margin: [0, 0, 0, 16] } as Content),
+        : ({
+            text: 'No clerk data for this period.',
+            style: 'meta',
+            margin: [0, 0, 0, 16],
+          } as Content),
       { text: 'Top Teams', style: 'sectionHeader' },
       data.service.topTeams.length > 0
         ? ({
@@ -705,31 +920,71 @@ export class ReportsService {
               widths: ['*', 100],
               body: [
                 tableHeader(['Team', 'Observations']),
-                ...data.service.topTeams.map((t) => [t.teamName, String(t.observationCount)]),
+                ...data.service.topTeams.map((t) => [
+                  t.teamName,
+                  String(t.observationCount),
+                ]),
               ],
             },
             layout: 'lightHorizontalLines',
             margin: [0, 0, 0, 16],
           } as Content)
-        : ({ text: 'No team activity for this period.', style: 'meta', margin: [0, 0, 0, 16] } as Content),
+        : ({
+            text: 'No team activity for this period.',
+            style: 'meta',
+            margin: [0, 0, 0, 16],
+          } as Content),
+      { text: 'Station Activity', style: 'sectionHeader' },
+      data.service.stationActivity.length > 0
+        ? ({
+            table: {
+              widths: ['*', 100],
+              body: [
+                tableHeader(['Station', 'Patients Served']),
+                ...data.service.stationActivity.map((s) => [
+                  s.stationName,
+                  String(s.visitCount),
+                ]),
+              ],
+            },
+            layout: 'lightHorizontalLines',
+            margin: [0, 0, 0, 16],
+          } as Content)
+        : ({
+            text: 'No station visits recorded for this period.',
+            style: 'meta',
+            margin: [0, 0, 0, 16],
+          } as Content),
       { text: 'Medication Dispensing', style: 'sectionHeader' },
       data.service.topMedications.length > 0
         ? ({
             table: {
               widths: ['*', 80, 80, 80],
               body: [
-                tableHeader(['Medication', 'Dispensed', 'Stock Left', 'Status']),
+                tableHeader([
+                  'Medication',
+                  'Dispensed',
+                  'Stock Left',
+                  'Status',
+                ]),
                 ...data.service.topMedications.map((m) => [
                   m.medicationName,
                   String(m.totalDispensed),
                   String(m.quantityInStock),
-                  m.stockStatus === 'out-of-stock' ? 'OUT OF STOCK' : m.stockStatus === 'low' ? 'LOW' : 'Adequate',
+                  m.stockStatus === 'out-of-stock'
+                    ? 'OUT OF STOCK'
+                    : m.stockStatus === 'low'
+                      ? 'LOW'
+                      : 'Adequate',
                 ]),
               ],
             },
             layout: 'lightHorizontalLines',
           } as Content)
-        : ({ text: 'No dispensing data for this period.', style: 'meta' } as Content),
+        : ({
+            text: 'No dispensing data for this period.',
+            style: 'meta',
+          } as Content),
     ];
 
     return buildPdf(

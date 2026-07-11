@@ -1,3 +1,4 @@
+import { FilterQuery } from '@mikro-orm/core';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { EntityManager, EntityRepository } from '@mikro-orm/postgresql';
 import { Injectable, NotFoundException } from '@nestjs/common';
@@ -16,6 +17,7 @@ import { User } from 'src/users/entities/user.entity';
 import { VitalSign } from 'src/vital-signs/entities/vital-sign.entity';
 import { CreateQueueEntryDto } from './dto/create-queue-entry.dto';
 import { MoveQueueEntryDto } from './dto/move-queue-entry.dto';
+import { PublicQueueQueryDto } from './dto/public-queue-query.dto';
 import { QueueEntryQueryDto } from './dto/query-queue-entry.dto';
 import { UpdateQueueEntryDto } from './dto/update-queue-entry.dto';
 import { UpdateQueueStatusDto } from './dto/update-queue-status.dto';
@@ -249,6 +251,50 @@ export class QueueEntriesService extends MikroOrmEntityService<
 
     await this.entityManager.flush();
     return this.find(id);
+  }
+
+  async findPublic(query: PublicQueueQueryDto) {
+    const limit = Math.min(query.limit ?? 20, 100);
+    const offset = query.offset ?? 0;
+    const search = query.search?.trim();
+
+    const where: FilterQuery<QueueEntry> = {
+      status: { $in: [QueueStatus.WAITING, QueueStatus.IN_SERVICE] },
+    };
+    if (query.outreachId) (where as any).outreach = { id: query.outreachId };
+    if (query.currentStationId) (where as any).currentStation = { id: query.currentStationId };
+    if (search) {
+      (where as any).$or = [
+        { patient: { firstName:          { $ilike: `%${search}%` } } },
+        { patient: { lastName:           { $ilike: `%${search}%` } } },
+        { patient: { registrationNumber: { $ilike: `%${search}%` } } },
+      ];
+    }
+
+    const [entries, total] = await this.repository.findAndCount(where, {
+      populate: ['patient', 'currentStation'] as any,
+      limit,
+      offset,
+      orderBy: { createdAt: 'ASC' },
+    });
+
+    return {
+      items: entries.map((e) => ({
+        id: e.id,
+        patient: {
+          firstName: (e.patient as any).firstName,
+          lastName:  (e.patient as any).lastName,
+          registrationNumber: (e.patient as any).registrationNumber,
+        },
+        currentStation: e.currentStation
+          ? { id: (e.currentStation as any).id, name: (e.currentStation as any).name }
+          : null,
+        status: e.status,
+        priority: e.priority,
+        createdAt: e.createdAt,
+      })),
+      paginationInfo: { totalNumItems: total },
+    };
   }
 
   async updateStatus(

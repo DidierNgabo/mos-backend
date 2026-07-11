@@ -11,6 +11,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOperation } from '@nestjs/swagger';
+import { Public } from 'src/auth/decorators/public.decorator';
 import { Action } from 'src/auth/casl/ability.types';
 import { CheckPolicies } from 'src/auth/casl/check-policies.decorator';
 import { CreateStationDto } from './dto/create-station.dto';
@@ -30,8 +31,8 @@ export class StationsController {
     return this.stationsService.create(dto);
   }
 
+  @Public()
   @Get()
-  @CheckPolicies((ability) => ability.can(Action.Read, 'Station'))
   @ApiOperation({ summary: 'List stations with filtering and pagination' })
   findAll(@Query() query: StationQueryDto) {
     return this.stationsService.findAll(query);

@@ -1,11 +1,13 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { Public } from 'src/auth/decorators/public.decorator';
 import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
 import { AuthenticatedUser } from 'src/auth/auth.types';
 import { Action } from 'src/auth/casl/ability.types';
 import { CheckPolicies } from 'src/auth/casl/check-policies.decorator';
 import { CreateQueueEntryDto } from './dto/create-queue-entry.dto';
 import { MoveQueueEntryDto } from './dto/move-queue-entry.dto';
+import { PublicQueueQueryDto } from './dto/public-queue-query.dto';
 import { QueueEntryQueryDto } from './dto/query-queue-entry.dto';
 import { UpdateQueueEntryDto } from './dto/update-queue-entry.dto';
 import { UpdateQueueStatusDto } from './dto/update-queue-status.dto';
@@ -26,6 +28,13 @@ export class QueueEntriesController {
   @CheckPolicies((ability) => ability.rulesFor(Action.Read, 'QueueEntry').some((r) => !r.inverted))
   findAll(@Query() query: QueueEntryQueryDto) {
     return this.queueEntriesService.findAll(query);
+  }
+
+  @Public()
+  @Get('public')
+  @ApiOperation({ summary: 'Public read-only queue display — no authentication required' })
+  findPublic(@Query() query: PublicQueueQueryDto) {
+    return this.queueEntriesService.findPublic(query);
   }
 
   @Get('my-queue')

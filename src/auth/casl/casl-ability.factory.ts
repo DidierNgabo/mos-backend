@@ -189,7 +189,7 @@ export class CaslAbilityFactory {
       can([Action.Create, Action.Read, Action.Update], 'Transfer', {
         outreach: { id: { $in: outreachIds } },
       } as any);
-      can([Action.Create, Action.Read], 'Prescription', {
+      can([Action.Create, Action.Read, Action.Delete], 'Prescription', {
         outreach: { id: { $in: outreachIds } },
       } as any);
     }
@@ -227,7 +227,20 @@ export class CaslAbilityFactory {
       can(Action.Read, 'Outreach', { id: { $in: outreachIds } } as any);
       can(Action.Read, 'Station');
       can(Action.Read, 'Team');
-      can(Action.Read, 'QueueEntry', {
+      can(Action.Read, 'Patient', {
+        outreach: { id: { $in: outreachIds } },
+      } as any);
+      can(Action.Read, 'User', {
+        'outreaches.id': { $in: outreachIds },
+      } as any);
+      can([Action.Read, Action.Update], 'QueueEntry', {
+        outreach: { id: { $in: outreachIds } },
+      } as any);
+      can(Action.Create, 'StationVisit');
+      can([Action.Create, Action.Read, Action.Update], 'Prescription', {
+        outreach: { id: { $in: outreachIds } },
+      } as any);
+      can([Action.Create, Action.Read, Action.Update], 'Transfer', {
         outreach: { id: { $in: outreachIds } },
       } as any);
       can(Action.Manage, 'PHQ9Screening', {
