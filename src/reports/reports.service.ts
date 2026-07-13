@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { stringify } from 'csv-stringify/sync';
 import type { TDocumentDefinitions, Content } from 'pdfmake/interfaces';
@@ -109,6 +109,7 @@ function buildPdf(
   title: string,
   outreachMeta: string,
   content: Content[],
+  opts?: { landscape?: boolean },
 ): Promise<Buffer> {
   const docDef: TDocumentDefinitions = {
     content: [
@@ -124,8 +125,9 @@ function buildPdf(
       } as Content,
     ],
     styles: PDF_STYLES,
-    defaultStyle: { font: 'Roboto', fontSize: 10 },
+    defaultStyle: { font: 'Roboto', fontSize: opts?.landscape ? 9 : 10 },
     pageMargins: [40, 40, 40, 40],
+    ...(opts?.landscape ? { pageOrientation: 'landscape' } : {}),
   };
 
   // pdfmake v2 (0.3.x) returns a document with a getBuffer() Promise
@@ -992,5 +994,810 @@ export class ReportsService {
       `${data.outreachName}  ·  ${dateRangeLine}`,
       content,
     );
+  }
+
+  // ─── Screenings Export (PDF + CSV) ───────────────────────────────────────
+
+  async generateScreeningsReport(
+    outreachId: string,
+    outreachName: string,
+    format: 'pdf' | 'csv',
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<Buffer> {
+    const knex = this.em.getKnex();
+
+    const applyDates = (qb: ReturnType<typeof knex>, col: string) => {
+      if (startDate) qb.where(col, '>=', startDate);
+      if (endDate) qb.where(col, '<', new Date(endDate.getTime() + 86_400_000));
+    };
+
+    const [phq9, gad7, pcl5] = await Promise.all([
+      knex('phq9_screenings as s')
+        .join('patients as p', 'p.id', 's.patient_id')
+        .where('s.outreach_id', outreachId)
+        .modify((qb) => applyDates(qb, 's.created_at'))
+        .select(
+          knex.raw("p.first_name || ' ' || p.last_name as patient_name"),
+          'p.registration_number',
+          's.total_score',
+          's.severity',
+          's.created_at',
+        )
+        .orderBy('s.created_at', 'asc'),
+
+      knex('gad7_screenings as s')
+        .join('patients as p', 'p.id', 's.patient_id')
+        .where('s.outreach_id', outreachId)
+        .modify((qb) => applyDates(qb, 's.created_at'))
+        .select(
+          knex.raw("p.first_name || ' ' || p.last_name as patient_name"),
+          'p.registration_number',
+          's.total_score',
+          's.severity',
+          's.created_at',
+        )
+        .orderBy('s.created_at', 'asc'),
+
+      knex('pcl5_screenings as s')
+        .join('patients as p', 'p.id', 's.patient_id')
+        .where('s.outreach_id', outreachId)
+        .modify((qb) => applyDates(qb, 's.created_at'))
+        .select(
+          knex.raw("p.first_name || ' ' || p.last_name as patient_name"),
+          'p.registration_number',
+          's.total_score',
+          's.severity',
+          's.created_at',
+        )
+        .orderBy('s.created_at', 'asc'),
+    ]);
+
+    const fmt = (d: unknown) =>
+      d ? new Date(d as string).toLocaleDateString() : '—';
+    const str = (v: unknown) => (v != null && v !== '' ? String(v) : '—');
+
+    if (format === 'csv') {
+      const rows = [
+        ...phq9.map((s) => ({
+          type: 'PHQ-9',
+          patient_name: s.patient_name,
+          patient_reg_no: s.registration_number,
+          date: fmt(s.created_at),
+          score: s.total_score,
+          severity: s.severity,
+        })),
+        ...gad7.map((s) => ({
+          type: 'GAD-7',
+          patient_name: s.patient_name,
+          patient_reg_no: s.registration_number,
+          date: fmt(s.created_at),
+          score: s.total_score,
+          severity: s.severity,
+        })),
+        ...pcl5.map((s) => ({
+          type: 'PCL-5',
+          patient_name: s.patient_name,
+          patient_reg_no: s.registration_number,
+          date: fmt(s.created_at),
+          score: s.total_score,
+          severity: s.severity,
+        })),
+      ];
+      return buildCsv(rows, {
+        type: 'Screening Type',
+        patient_name: 'Patient Name',
+        patient_reg_no: 'Reg. No.',
+        date: 'Date',
+        score: 'Score',
+        severity: 'Severity',
+      });
+    }
+
+    const screeningTable = (
+      rows: typeof phq9,
+    ): Content =>
+      rows.length > 0
+        ? ({
+            table: {
+              widths: [60, '*', 70, 50, '*'],
+              body: [
+                tableHeader(['Date', 'Patient', 'Reg. No.', 'Score', 'Severity']),
+                ...rows.map((s) => [
+                  fmt(s.created_at),
+                  str(s.patient_name),
+                  str(s.registration_number),
+                  String(s.total_score),
+                  str(s.severity),
+                ]),
+              ],
+            },
+            layout: 'lightHorizontalLines',
+            margin: [0, 0, 0, 16],
+          } as Content)
+        : ({
+            text: 'No records for this period.',
+            style: 'meta',
+            margin: [0, 0, 0, 16],
+          } as Content);
+
+    const content: Content[] = [
+      {
+        columns: [
+          statBox('PHQ-9 Records', phq9.length),
+          statBox('GAD-7 Records', gad7.length),
+          statBox('PCL-5 Records', pcl5.length),
+          statBox('Total Screenings', phq9.length + gad7.length + pcl5.length),
+        ],
+        margin: [0, 0, 0, 16],
+      },
+      { text: 'PHQ-9 Screenings (Depression)', style: 'sectionHeader' },
+      screeningTable(phq9),
+      { text: 'GAD-7 Screenings (Anxiety)', style: 'sectionHeader' },
+      screeningTable(gad7),
+      { text: 'PCL-5 Screenings (PTSD)', style: 'sectionHeader' },
+      screeningTable(pcl5),
+    ];
+
+    return buildPdf('Screenings Export', outreachName, content);
+  }
+
+  // ─── Outreach Users (PDF) ─────────────────────────────────────────────────
+
+  async generateOutreachUsersReport(
+    outreachId: string,
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<Buffer> {
+    const knex = this.em.getKnex();
+
+    const applyDates = (qb: ReturnType<typeof knex>, col: string) => {
+      if (startDate) qb.where(col, '>=', startDate);
+      if (endDate) qb.where(col, '<', new Date(endDate.getTime() + 86_400_000));
+    };
+
+    const outreach = await knex('outreaches')
+      .where('id', outreachId)
+      .select('name')
+      .first();
+
+    const users = await knex('outreaches_members as om')
+      .join('users as u', 'u.id', 'om.user_id')
+      .leftJoin('stations as s', 's.id', 'u.station_id')
+      .where('om.outreach_id', outreachId)
+      .select(
+        'u.id',
+        knex.raw("u.first_name || ' ' || u.last_name as full_name"),
+        'u.email',
+        knex.raw("coalesce(s.name, '—') as station_name"),
+      );
+
+    if (users.length === 0) {
+      return buildPdf(
+        'Outreach Staff Report',
+        outreach?.name ?? outreachId,
+        [{ text: 'No staff assigned to this outreach.', style: 'meta' } as Content],
+      );
+    }
+
+    const userIds = users.map((u) => u.id as string);
+
+    const [rolesRows, patientsReg, obsRows, labRows, rxRows] = await Promise.all([
+      knex('users_roles as ur')
+        .join('roles as r', 'r.id', 'ur.role_id')
+        .whereIn('ur.user_id', userIds)
+        .select('ur.user_id', 'r.name as role_name'),
+
+      knex('patients')
+        .where('outreach_id', outreachId)
+        .modify((qb) => applyDates(qb, 'created_at'))
+        .whereIn('registered_by_id', userIds)
+        .select('registered_by_id')
+        .count('id as cnt')
+        .groupBy('registered_by_id'),
+
+      knex('observations')
+        .where('outreach_id', outreachId)
+        .modify((qb) => applyDates(qb, 'created_at'))
+        .whereIn('recorded_by_id', userIds)
+        .select('recorded_by_id')
+        .count('id as cnt')
+        .groupBy('recorded_by_id'),
+
+      knex('lab_results')
+        .where('outreach_id', outreachId)
+        .modify((qb) => applyDates(qb, 'created_at'))
+        .whereIn('recorded_by_id', userIds)
+        .select('recorded_by_id')
+        .count('id as cnt')
+        .groupBy('recorded_by_id'),
+
+      knex('prescriptions')
+        .where('outreach_id', outreachId)
+        .modify((qb) => applyDates(qb, 'created_at'))
+        .whereNotNull('dispensed_by_id')
+        .whereIn('dispensed_by_id', userIds)
+        .select('dispensed_by_id')
+        .count('id as cnt')
+        .groupBy('dispensed_by_id'),
+    ]);
+
+    const rolesMap = new Map<string, string[]>();
+    for (const r of rolesRows) {
+      const uid = r.user_id as string;
+      if (!rolesMap.has(uid)) rolesMap.set(uid, []);
+      rolesMap.get(uid)!.push(r.role_name as string);
+    }
+
+    const count = (rows: { [key: string]: unknown }[], idKey: string, uid: string) =>
+      Number((rows.find((r) => r[idKey] === uid) as { cnt?: unknown } | undefined)?.cnt ?? 0);
+
+    const tableRows = users.map((u) => [
+      String(u.full_name),
+      String(u.email),
+      String(u.station_name),
+      (rolesMap.get(u.id as string) ?? []).join(', ') || '—',
+      String(count(patientsReg as { [key: string]: unknown }[], 'registered_by_id', u.id as string)),
+      String(count(obsRows as { [key: string]: unknown }[], 'recorded_by_id', u.id as string)),
+      String(count(labRows as { [key: string]: unknown }[], 'recorded_by_id', u.id as string)),
+      String(count(rxRows as { [key: string]: unknown }[], 'dispensed_by_id', u.id as string)),
+    ]);
+
+    const content: Content[] = [
+      {
+        columns: [statBox('Total Staff', users.length)],
+        margin: [0, 0, 0, 16],
+      },
+      { text: 'Staff Activity', style: 'sectionHeader' },
+      {
+        table: {
+          widths: ['*', '*', 70, 70, 45, 45, 35, 45],
+          body: [
+            tableHeader(['Name', 'Email', 'Station', 'Roles', 'Patients', 'Obs.', 'Labs', 'Dispensed']),
+            ...tableRows,
+          ],
+        },
+        layout: 'lightHorizontalLines',
+      } as Content,
+    ];
+
+    return buildPdf('Outreach Staff Report', outreach?.name ?? outreachId, content);
+  }
+
+  // ─── Station Report (PDF + CSV) ───────────────────────────────────────────
+
+  async generateStationReport(
+    stationId: string,
+    format: 'pdf' | 'csv',
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<Buffer> {
+    const knex = this.em.getKnex();
+
+    const station = await knex('stations as s')
+      .join('outreaches as o', 'o.id', 's.outreach_id')
+      .where('s.id', stationId)
+      .select('s.name as station_name', 's.type', 'o.name as outreach_name')
+      .first();
+
+    const visits = await knex('station_visits as sv')
+      .join('queue_entries as qe', 'qe.id', 'sv.queue_entry_id')
+      .join('patients as p', 'p.id', 'qe.patient_id')
+      .where('sv.station_id', stationId)
+      .modify((qb) => {
+        if (startDate) qb.where('sv.arrived_at', '>=', startDate);
+        if (endDate)
+          qb.where('sv.arrived_at', '<', new Date(endDate.getTime() + 86_400_000));
+      })
+      .select(
+        knex.raw("p.first_name || ' ' || p.last_name as patient_name"),
+        'p.registration_number',
+        'qe.priority',
+        'sv.arrived_at',
+        'sv.departed_at',
+        knex.raw(`
+          CASE WHEN sv.departed_at IS NOT NULL
+          THEN ROUND(EXTRACT(EPOCH FROM (sv.departed_at - sv.arrived_at)) / 60)
+          ELSE NULL END as duration_minutes
+        `),
+        knex.raw(`(SELECT o.diagnosis FROM observations o
+                   WHERE o.queue_entry_id = qe.id
+                   ORDER BY o.created_at DESC LIMIT 1) AS diagnosis`),
+        knex.raw(`(SELECT o.treatment_given FROM observations o
+                   WHERE o.queue_entry_id = qe.id
+                   ORDER BY o.created_at DESC LIMIT 1) AS treatment_given`),
+        knex.raw(`(SELECT t.referred_to_facility FROM transfers t
+                   WHERE t.queue_entry_id = qe.id
+                   ORDER BY t.created_at DESC LIMIT 1) AS referred_to_facility`),
+        knex.raw(`(SELECT t.referred_service FROM transfers t
+                   WHERE t.queue_entry_id = qe.id
+                   ORDER BY t.created_at DESC LIMIT 1) AS referred_service`),
+        knex.raw(`(SELECT t.urgency FROM transfers t
+                   WHERE t.queue_entry_id = qe.id
+                   ORDER BY t.created_at DESC LIMIT 1) AS transfer_urgency`),
+        knex.raw(`(SELECT ph.total_score FROM phq9_screenings ph
+                   WHERE ph.queue_entry_id = qe.id ORDER BY ph.created_at DESC LIMIT 1) AS phq9_score`),
+        knex.raw(`(SELECT ph.severity FROM phq9_screenings ph
+                   WHERE ph.queue_entry_id = qe.id ORDER BY ph.created_at DESC LIMIT 1) AS phq9_severity`),
+        knex.raw(`(SELECT g.total_score FROM gad7_screenings g
+                   WHERE g.queue_entry_id = qe.id ORDER BY g.created_at DESC LIMIT 1) AS gad7_score`),
+        knex.raw(`(SELECT g.severity FROM gad7_screenings g
+                   WHERE g.queue_entry_id = qe.id ORDER BY g.created_at DESC LIMIT 1) AS gad7_severity`),
+        knex.raw(`(SELECT pc.total_score FROM pcl5_screenings pc
+                   WHERE pc.queue_entry_id = qe.id ORDER BY pc.created_at DESC LIMIT 1) AS pcl5_score`),
+        knex.raw(`(SELECT pc.severity FROM pcl5_screenings pc
+                   WHERE pc.queue_entry_id = qe.id ORDER BY pc.created_at DESC LIMIT 1) AS pcl5_severity`),
+      )
+      .orderBy('sv.arrived_at', 'asc');
+
+    const fmt = (d: unknown) =>
+      d ? new Date(d as string).toLocaleDateString() : '—';
+    const fmtTime = (d: unknown) =>
+      d ? new Date(d as string).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—';
+    const str = (v: unknown) => (v != null && v !== '' ? String(v) : '—');
+
+    const stationLabel = station
+      ? `${station.station_name as string}  ·  ${station.outreach_name as string}`
+      : stationId;
+
+    if (format === 'csv') {
+      return buildCsv(
+        visits.map((v) => ({
+          date: fmt(v.arrived_at),
+          patient_name: v.patient_name,
+          patient_reg_no: v.registration_number,
+          arrived_at: fmtTime(v.arrived_at),
+          departed_at: fmtTime(v.departed_at),
+          duration_minutes: v.duration_minutes != null ? String(v.duration_minutes) : '',
+          priority: v.priority,
+          diagnosis: str(v.diagnosis),
+          treatment_given: str(v.treatment_given),
+          referred_to_facility: str(v.referred_to_facility),
+          referred_service: str(v.referred_service),
+          transfer_urgency: str(v.transfer_urgency),
+          phq9_score: v.phq9_score != null ? String(v.phq9_score) : '',
+          phq9_severity: str(v.phq9_severity),
+          gad7_score: v.gad7_score != null ? String(v.gad7_score) : '',
+          gad7_severity: str(v.gad7_severity),
+          pcl5_score: v.pcl5_score != null ? String(v.pcl5_score) : '',
+          pcl5_severity: str(v.pcl5_severity),
+        })),
+        {
+          date: 'Date',
+          patient_name: 'Patient',
+          patient_reg_no: 'Reg. No.',
+          arrived_at: 'Arrived',
+          departed_at: 'Departed',
+          duration_minutes: 'Duration (min)',
+          priority: 'Priority',
+          diagnosis: 'Diagnosis',
+          treatment_given: 'Treatment Given',
+          referred_to_facility: 'Referred To (Facility)',
+          referred_service: 'Referred Service',
+          transfer_urgency: 'Referral Urgency',
+          phq9_score: 'PHQ-9 Score',
+          phq9_severity: 'PHQ-9 Severity',
+          gad7_score: 'GAD-7 Score',
+          gad7_severity: 'GAD-7 Severity',
+          pcl5_score: 'PCL-5 Score',
+          pcl5_severity: 'PCL-5 Severity',
+        },
+      );
+    }
+
+    const completedVisits = visits.filter((v) => v.departed_at != null);
+    const avgDuration =
+      completedVisits.length > 0
+        ? Math.round(
+            completedVisits.reduce((sum, v) => sum + Number(v.duration_minutes ?? 0), 0) /
+              completedVisits.length,
+          )
+        : 0;
+
+    const screening = (score: unknown, sev: unknown) =>
+      score != null ? `${score} (${String(sev)})` : '—';
+
+    const content: Content[] = [
+      {
+        columns: [
+          statBox('Total Visits', visits.length),
+          statBox('Avg Duration (min)', avgDuration),
+        ],
+        margin: [0, 0, 0, 16],
+      },
+      { text: 'Patient Visits', style: 'sectionHeader' },
+      visits.length > 0
+        ? ({
+            table: {
+              widths: [42, '*', 60, 28, '*', 85, 85, 42, 42, 42, 50],
+              body: [
+                tableHeader([
+                  'Date', 'Patient', 'Reg. No.', 'Min',
+                  'Diagnosis', 'Treatment', 'Referred To',
+                  'PHQ-9', 'GAD-7', 'PCL-5', 'Priority',
+                ]),
+                ...visits.map((v) => [
+                  fmt(v.arrived_at),
+                  str(v.patient_name),
+                  str(v.registration_number),
+                  v.duration_minutes != null ? String(v.duration_minutes) : '—',
+                  str(v.diagnosis),
+                  str(v.treatment_given),
+                  v.referred_to_facility != null
+                    ? `${str(v.referred_to_facility)}${v.referred_service ? ` / ${str(v.referred_service)}` : ''}`
+                    : '—',
+                  screening(v.phq9_score, v.phq9_severity),
+                  screening(v.gad7_score, v.gad7_severity),
+                  screening(v.pcl5_score, v.pcl5_severity),
+                  str(v.priority),
+                ]),
+              ],
+            },
+            layout: 'lightHorizontalLines',
+          } as Content)
+        : ({
+            text: 'No visits recorded for this period.',
+            style: 'meta',
+          } as Content),
+    ];
+
+    return buildPdf(
+      `Station Report — ${station?.station_name ?? 'Unknown'}`,
+      stationLabel,
+      content,
+      { landscape: true },
+    );
+  }
+
+  // ─── Patient History (PDF) ────────────────────────────────────────────────
+
+  async generatePatientHistoryReport(patientId: string): Promise<Buffer> {
+    const knex = this.em.getKnex();
+
+    const [
+      patient,
+      vitalSigns,
+      observations,
+      labResults,
+      prescriptions,
+      transfers,
+      phq9,
+      gad7,
+      pcl5,
+    ] = await Promise.all([
+      knex('patients as p')
+        .leftJoin('users as u', 'u.id', 'p.registered_by_id')
+        .select(
+          'p.id',
+          'p.first_name',
+          'p.last_name',
+          'p.date_of_birth',
+          'p.gender',
+          'p.registration_number',
+          'p.national_id',
+          'p.phone_number',
+          'p.province',
+          'p.district',
+          'p.sector',
+          'p.cell',
+          'p.village',
+          knex.raw("u.first_name || ' ' || u.last_name AS registered_by_name"),
+        )
+        .where('p.id', patientId)
+        .first(),
+
+      knex('vital_signs')
+        .where('patient_id', patientId)
+        .orderBy('created_at', 'asc'),
+
+      knex('observations')
+        .where('patient_id', patientId)
+        .orderBy('created_at', 'asc'),
+
+      knex('lab_results')
+        .where('patient_id', patientId)
+        .orderBy('created_at', 'asc'),
+
+      knex('prescriptions as rx')
+        .leftJoin('pharmacy_stock as ps', 'ps.id', 'rx.pharmacy_stock_id')
+        .select(
+          'rx.id',
+          'rx.dosage',
+          'rx.quantity',
+          'rx.status',
+          'rx.created_at',
+          'rx.custom_medication_name',
+          'ps.medication_name as stock_name',
+        )
+        .where('rx.patient_id', patientId)
+        .orderBy('rx.created_at', 'asc'),
+
+      knex('transfers')
+        .where('patient_id', patientId)
+        .orderBy('created_at', 'asc'),
+
+      knex('phq9_screenings')
+        .where('patient_id', patientId)
+        .orderBy('created_at', 'asc'),
+
+      knex('gad7_screenings')
+        .where('patient_id', patientId)
+        .orderBy('created_at', 'asc'),
+
+      knex('pcl5_screenings')
+        .where('patient_id', patientId)
+        .orderBy('created_at', 'asc'),
+    ]);
+
+    if (!patient) throw new NotFoundException('Patient not found');
+
+    const fmt = (d: unknown) =>
+      d ? new Date(d as string).toLocaleDateString() : '—';
+    const str = (v: unknown) => (v != null && v !== '' ? String(v) : '—');
+
+    const patientName = `${patient.first_name as string} ${patient.last_name as string}`;
+    const locationParts = [
+      patient.village,
+      patient.cell,
+      patient.sector,
+      patient.district,
+      patient.province,
+    ].filter(Boolean);
+
+    const content: Content[] = [
+      // ── Demographics ──────────────────────────────────────────────────────
+      { text: 'Patient Information', style: 'sectionHeader' },
+      {
+        table: {
+          widths: ['*', '*'],
+          body: [
+            [
+              { text: 'Full Name', bold: true },
+              patientName,
+            ],
+            [
+              { text: 'Date of Birth', bold: true },
+              fmt(patient.date_of_birth),
+            ],
+            [
+              { text: 'Gender', bold: true },
+              str(patient.gender),
+            ],
+            [
+              { text: 'Registration No.', bold: true },
+              str(patient.registration_number),
+            ],
+            [
+              { text: 'National ID', bold: true },
+              str(patient.national_id),
+            ],
+            [
+              { text: 'Phone', bold: true },
+              str(patient.phone_number),
+            ],
+            [
+              { text: 'Location', bold: true },
+              locationParts.join(', ') || '—',
+            ],
+          ],
+        },
+        layout: 'lightHorizontalLines',
+        margin: [0, 0, 0, 16],
+      } as Content,
+
+      // ── Vital Signs ───────────────────────────────────────────────────────
+      { text: 'Vital Signs', style: 'sectionHeader' },
+      vitalSigns.length > 0
+        ? ({
+            table: {
+              widths: [60, 50, 40, 40, 40, 40, 40, 40],
+              body: [
+                tableHeader([
+                  'Date',
+                  'BP',
+                  'Pulse',
+                  'Temp',
+                  'Wt (kg)',
+                  'Ht (cm)',
+                  'BMI',
+                  'SpO₂%',
+                ]),
+                ...vitalSigns.map((v) => [
+                  fmt(v.created_at),
+                  v.blood_pressure_systolic != null
+                    ? `${v.blood_pressure_systolic}/${v.blood_pressure_diastolic}`
+                    : '—',
+                  str(v.pulse_rate),
+                  str(v.temperature),
+                  str(v.weight),
+                  str(v.height),
+                  str(v.bmi),
+                  str(v.oxygen_saturation),
+                ]),
+              ],
+            },
+            layout: 'lightHorizontalLines',
+            margin: [0, 0, 0, 16],
+          } as Content)
+        : ({
+            text: 'No vital signs recorded.',
+            style: 'meta',
+            margin: [0, 0, 0, 16],
+          } as Content),
+
+      // ── Observations / Diagnoses ──────────────────────────────────────────
+      { text: 'Observations & Diagnoses', style: 'sectionHeader' },
+      observations.length > 0
+        ? ({
+            table: {
+              widths: [60, '*', '*', 80],
+              body: [
+                tableHeader(['Date', 'Chief Complaint', 'Diagnosis', 'Treatment']),
+                ...observations.map((o) => [
+                  fmt(o.created_at),
+                  str(o.chief_complaint),
+                  str(o.diagnosis),
+                  str(o.treatment_given),
+                ]),
+              ],
+            },
+            layout: 'lightHorizontalLines',
+            margin: [0, 0, 0, 16],
+          } as Content)
+        : ({
+            text: 'No observations recorded.',
+            style: 'meta',
+            margin: [0, 0, 0, 16],
+          } as Content),
+
+      // ── Lab Results ───────────────────────────────────────────────────────
+      { text: 'Lab Results', style: 'sectionHeader' },
+      labResults.length > 0
+        ? ({
+            table: {
+              widths: [60, '*', 80, 60, 50],
+              body: [
+                tableHeader(['Date', 'Test', 'Result', 'Unit', 'Abnormal']),
+                ...labResults.map((l) => [
+                  fmt(l.created_at),
+                  str(l.test_type),
+                  str(l.result_value),
+                  str(l.result_unit),
+                  l.is_abnormal ? 'YES' : 'No',
+                ]),
+              ],
+            },
+            layout: 'lightHorizontalLines',
+            margin: [0, 0, 0, 16],
+          } as Content)
+        : ({
+            text: 'No lab results recorded.',
+            style: 'meta',
+            margin: [0, 0, 0, 16],
+          } as Content),
+
+      // ── Prescriptions ─────────────────────────────────────────────────────
+      { text: 'Prescriptions', style: 'sectionHeader' },
+      prescriptions.length > 0
+        ? ({
+            table: {
+              widths: [60, '*', 80, 50, 70],
+              body: [
+                tableHeader(['Date', 'Medication', 'Dosage', 'Qty', 'Status']),
+                ...prescriptions.map((rx) => [
+                  fmt(rx.created_at),
+                  str(rx.custom_medication_name ?? rx.stock_name),
+                  str(rx.dosage),
+                  String(rx.quantity),
+                  str(rx.status),
+                ]),
+              ],
+            },
+            layout: 'lightHorizontalLines',
+            margin: [0, 0, 0, 16],
+          } as Content)
+        : ({
+            text: 'No prescriptions recorded.',
+            style: 'meta',
+            margin: [0, 0, 0, 16],
+          } as Content),
+
+      // ── Transfers / Referrals ─────────────────────────────────────────────
+      { text: 'Transfers & Referrals', style: 'sectionHeader' },
+      transfers.length > 0
+        ? ({
+            table: {
+              widths: [60, '*', '*', 60],
+              body: [
+                tableHeader(['Date', 'Facility', 'Service', 'Urgency']),
+                ...transfers.map((t) => [
+                  fmt(t.created_at),
+                  str(t.referred_to_facility),
+                  str(t.referred_service),
+                  str(t.urgency),
+                ]),
+              ],
+            },
+            layout: 'lightHorizontalLines',
+            margin: [0, 0, 0, 16],
+          } as Content)
+        : ({
+            text: 'No transfers recorded.',
+            style: 'meta',
+            margin: [0, 0, 0, 16],
+          } as Content),
+
+      // ── PHQ-9 Screenings ──────────────────────────────────────────────────
+      { text: 'PHQ-9 Screenings (Depression)', style: 'sectionHeader' },
+      phq9.length > 0
+        ? ({
+            table: {
+              widths: [60, 80, '*'],
+              body: [
+                tableHeader(['Date', 'Score', 'Severity']),
+                ...phq9.map((s) => [
+                  fmt(s.created_at),
+                  String(s.total_score),
+                  str(s.severity),
+                ]),
+              ],
+            },
+            layout: 'lightHorizontalLines',
+            margin: [0, 0, 0, 16],
+          } as Content)
+        : ({
+            text: 'No PHQ-9 screenings recorded.',
+            style: 'meta',
+            margin: [0, 0, 0, 16],
+          } as Content),
+
+      // ── GAD-7 Screenings ──────────────────────────────────────────────────
+      { text: 'GAD-7 Screenings (Anxiety)', style: 'sectionHeader' },
+      gad7.length > 0
+        ? ({
+            table: {
+              widths: [60, 80, '*'],
+              body: [
+                tableHeader(['Date', 'Score', 'Severity']),
+                ...gad7.map((s) => [
+                  fmt(s.created_at),
+                  String(s.total_score),
+                  str(s.severity),
+                ]),
+              ],
+            },
+            layout: 'lightHorizontalLines',
+            margin: [0, 0, 0, 16],
+          } as Content)
+        : ({
+            text: 'No GAD-7 screenings recorded.',
+            style: 'meta',
+            margin: [0, 0, 0, 16],
+          } as Content),
+
+      // ── PCL-5 Screenings ──────────────────────────────────────────────────
+      { text: 'PCL-5 Screenings (PTSD)', style: 'sectionHeader' },
+      pcl5.length > 0
+        ? ({
+            table: {
+              widths: [60, 80, '*'],
+              body: [
+                tableHeader(['Date', 'Score', 'Severity']),
+                ...pcl5.map((s) => [
+                  fmt(s.created_at),
+                  String(s.total_score),
+                  str(s.severity),
+                ]),
+              ],
+            },
+            layout: 'lightHorizontalLines',
+          } as Content)
+        : ({
+            text: 'No PCL-5 screenings recorded.',
+            style: 'meta',
+          } as Content),
+    ];
+
+    return buildPdf('Patient Medical History', patientName, content);
   }
 }

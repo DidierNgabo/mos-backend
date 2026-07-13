@@ -42,3 +42,30 @@ export class ImpactReportQueryDto {
   @IsDateString()
   endDate?: string;
 }
+
+export class PatientHistoryReportQueryDto {
+  @ApiProperty({ description: 'UUID of the patient to generate the report for' })
+  @IsUUID()
+  patientId: string;
+}
+
+export class StationReportQueryDto {
+  @ApiProperty({ description: 'UUID of the station to generate the report for' })
+  @IsUUID()
+  stationId: string;
+
+  @ApiPropertyOptional({ enum: ['pdf', 'csv'], default: 'pdf' })
+  @IsOptional()
+  @IsIn(['pdf', 'csv'])
+  format: 'pdf' | 'csv' = 'pdf';
+
+  @ApiPropertyOptional({ example: '2026-05-01', description: 'Filter records from this date (inclusive)' })
+  @IsOptional()
+  @IsDateString()
+  startDate?: string;
+
+  @ApiPropertyOptional({ example: '2026-05-21', description: 'Filter records up to this date (inclusive)' })
+  @IsOptional()
+  @IsDateString()
+  endDate?: string;
+}

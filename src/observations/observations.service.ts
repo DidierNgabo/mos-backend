@@ -58,6 +58,11 @@ export class ObservationsService extends MikroOrmEntityService<
     return this.find(obs.id) as Promise<Observation>;
   }
 
+  findMyObservations(userId: string, query: ObservationQueryDto) {
+    query.recordedById = userId;
+    return this.findAll(query);
+  }
+
   searchDiagnoses(query: string, limit = 30) {
     return this.diagnosisCatalogService.search(query, limit);
   }

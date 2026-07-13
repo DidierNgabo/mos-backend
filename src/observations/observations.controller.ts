@@ -51,6 +51,17 @@ export class ObservationsController {
     return this.observationsService.findAll(query);
   }
 
+  @Get('my-observations')
+  @CheckPolicies((ability) =>
+    ability.rulesFor(Action.Read, 'Observation').some((r) => !r.inverted),
+  )
+  getMyObservations(
+    @Query() query: ObservationQueryDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.observationsService.findMyObservations(user.id, query);
+  }
+
   @Get(':id')
   @CheckPolicies((ability) =>
     ability.rulesFor(Action.Read, 'Observation').some((r) => !r.inverted),
